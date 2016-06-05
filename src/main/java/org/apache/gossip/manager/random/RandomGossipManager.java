@@ -23,10 +23,75 @@ import org.apache.gossip.event.GossipListener;
 import org.apache.gossip.manager.GossipManager;
 import org.apache.gossip.manager.impl.OnlyProcessReceivedPassiveGossipThread;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class RandomGossipManager extends GossipManager {
-  public RandomGossipManager(String cluster, String address, int port, String id,
+
+  public static ManagerBuilder newBuilder() {
+    return new ManagerBuilder();
+  }
+
+  public static final class ManagerBuilder {
+    private String cluster;
+    private String address;
+    private int port;
+    private String id;
+    private GossipSettings settings;
+    private List<GossipMember> gossipMembers;
+    private GossipListener listener;
+
+    private ManagerBuilder() {}
+
+    private void checkArgument(boolean check, String msg) {
+      if (!check) {
+        throw new IllegalArgumentException(msg);
+      }
+    }
+
+    public ManagerBuilder cluster(String cluster) {
+      this.cluster = cluster;
+      return this;
+    }
+
+    public ManagerBuilder address(String address) {
+      this.address = address;
+      return this;
+    }
+
+    public ManagerBuilder port(int port) {
+      this.port = port;
+      return this;
+    }
+
+    public ManagerBuilder withId(String id) {
+      this.id = id;
+      return this;
+    }
+
+    public ManagerBuilder settings(GossipSettings settings) {
+      this.settings = settings;
+      return this;
+    }
+
+    public ManagerBuilder gossipMembers(List<GossipMember> members) {
+      this.gossipMembers = members == null ? new ArrayList<GossipMember>(): members;
+      return this;
+    }
+
+    public ManagerBuilder listener(GossipListener listener) {
+      this.listener = listener;
+      return this;
+    }
+
+    public RandomGossipManager build() {
+      checkArgument(id != null, "You must specify an id");
+      checkArgument(cluster != null, "You must specify a cluster name");
+      return new RandomGossipManager(cluster, address, port, id, settings, gossipMembers, listener);
+    }
+  }
+  
+  private RandomGossipManager(String cluster, String address, int port, String id,
                              GossipSettings settings, List<GossipMember> gossipMembers, GossipListener listener) {
     super(OnlyProcessReceivedPassiveGossipThread.class, RandomActiveGossipThread.class, cluster,
             address, port, id, settings, gossipMembers, listener);

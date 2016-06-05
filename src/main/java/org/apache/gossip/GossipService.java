@@ -59,8 +59,15 @@ public class GossipService {
   public GossipService(String cluster, String ipAddress, int port, String id,
           List<GossipMember> gossipMembers, GossipSettings settings, GossipListener listener)
           throws InterruptedException, UnknownHostException {
-    gossipManager = new RandomGossipManager(cluster, ipAddress, port, id, settings, gossipMembers,
-            listener);
+    gossipManager = RandomGossipManager.newBuilder()
+        .withId(id)
+        .cluster(cluster)
+        .address(ipAddress)
+        .port(port)
+        .settings(settings)
+        .gossipMembers(gossipMembers)
+        .listener(listener)
+        .build();
   }
 
   public void start() {
