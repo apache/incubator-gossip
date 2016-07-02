@@ -38,7 +38,6 @@ You can:
 * Report bugs and submit patches.
 * Contribute code, javadocs, documentation.
 
-Visit the [Contributing](https://cwiki.apache.org/confluence/display/RYA/Contributing+to+Rya) page for more information.
 
 ### Mailing list
 
