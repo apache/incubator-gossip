@@ -83,6 +83,7 @@ public class RandomActiveGossipThread extends ActiveGossipThread {
         byte[] buf = createBuffer(packet_length, json_bytes);
         DatagramPacket datagramPacket = new DatagramPacket(buf, buf.length, dest, member.getUri().getPort());
         socket.send(datagramPacket);
+        
       } else {
         GossipService.LOGGER.error("The length of the to be send message is too large ("
                 + packet_length + " > " + GossipManager.MAX_PACKET_SIZE + ").");

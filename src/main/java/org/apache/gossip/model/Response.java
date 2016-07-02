@@ -1,5 +1,5 @@
 package org.apache.gossip.model;
 
-public abstract class Response {
+public abstract class Response extends Base {
 
 }

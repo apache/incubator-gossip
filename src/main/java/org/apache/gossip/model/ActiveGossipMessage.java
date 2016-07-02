@@ -3,7 +3,7 @@ package org.apache.gossip.model;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ActiveGossipMessage extends Message {
+public class ActiveGossipMessage extends Base {
 
   private List<GossipMember> members = new ArrayList<>();
   

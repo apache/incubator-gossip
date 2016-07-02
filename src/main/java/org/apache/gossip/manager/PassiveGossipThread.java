@@ -23,15 +23,12 @@ import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.SocketException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.gossip.GossipMember;
 import org.apache.gossip.GossipService;
-import org.apache.gossip.model.ActiveGossipMessage;
+import org.apache.gossip.model.Base;
 import org.apache.log4j.Logger;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.apache.gossip.RemoteGossipMember;
@@ -56,9 +53,12 @@ abstract public class PassiveGossipThread implements Runnable {
   private final String cluster;
   
   private final ObjectMapper MAPPER = new ObjectMapper();
+  
+  private GossipCore gossipCore;
 
   public PassiveGossipThread(GossipManager gossipManager) {
     this.gossipManager = gossipManager;
+    gossipCore = new GossipCore(gossipManager);
     try {
       SocketAddress socketAddress = new InetSocketAddress(gossipManager.getMyself().getUri().getHost(),
               gossipManager.getMyself().getUri().getPort());
@@ -84,57 +84,21 @@ abstract public class PassiveGossipThread implements Runnable {
         byte[] buf = new byte[server.getReceiveBufferSize()];
         DatagramPacket p = new DatagramPacket(buf, buf.length);
         server.receive(p);
-        int packet_length = 0;
-        for (int i = 0; i < 4; i++) {
-          int shift = (4 - 1 - i) * 8;
-          packet_length += (buf[i] & 0x000000FF) << shift;
-        }
+        int packet_length = UdpUtil.readPacketLengthFromBuffer(buf);
         if (packet_length <= GossipManager.MAX_PACKET_SIZE) {
           byte[] json_bytes = new byte[packet_length];
           for (int i = 0; i < packet_length; i++) {
             json_bytes[i] = buf[i + 4];
           }
-          if (GossipService.LOGGER.isDebugEnabled()){
-            String receivedMessage = new String(json_bytes);
-            GossipService.LOGGER.debug("Received message (" + packet_length + " bytes): "
-                  + receivedMessage);
-          }
+          debug(packet_length, json_bytes);
           try {
-            List<GossipMember> remoteGossipMembers = new ArrayList<>();
-            RemoteGossipMember senderMember = null;
-            ActiveGossipMessage activeGossipMessage = MAPPER.readValue(json_bytes,
-                    ActiveGossipMessage.class);
-            for (int i = 0; i < activeGossipMessage.getMembers().size(); i++) {
-              URI u = null;
-              try {
-                u = new URI(activeGossipMessage.getMembers().get(i).getUri());
-              } catch (URISyntaxException e) {
-                LOGGER.debug("Gossip message with faulty URI", e);
-                continue;
-              }
-              RemoteGossipMember member = new RemoteGossipMember(
-                      activeGossipMessage.getMembers().get(i).getCluster(),
-                      u,
-                      activeGossipMessage.getMembers().get(i).getId(),
-                      activeGossipMessage.getMembers().get(i).getHeartbeat());
-              if (!(member.getClusterName().equals(cluster))){
-                LOGGER.warn("Note a member of this cluster " + i);
-                continue;
-              }
-              // This is the first member found, so this should be the member who is communicating
-              // with me.
-              if (i == 0) {
-                senderMember = member;
-              } 
-              remoteGossipMembers.add(member);
-            }
-            mergeLists(gossipManager, senderMember, remoteGossipMembers);
-          } catch (RuntimeException ex) {
+            Base activeGossipMessage = MAPPER.readValue(json_bytes, Base.class);
+            gossipCore.recieve(activeGossipMessage);
+          } catch (RuntimeException ex) {//TODO trap json exception
             LOGGER.error("Unable to process message", ex);
           }
         } else {
-          LOGGER
-                  .error("The received message is not of the expected size, it has been dropped.");
+          LOGGER.error("The received message is not of the expected size, it has been dropped.");
         }
 
       } catch (IOException e) {
@@ -143,6 +107,14 @@ abstract public class PassiveGossipThread implements Runnable {
       }
     }
     shutdown();
+  }
+
+  private void debug(int packetLength, byte[] jsonBytes) {
+    if (GossipService.LOGGER.isDebugEnabled()){
+      String receivedMessage = new String(jsonBytes);
+      GossipService.LOGGER.debug("Received message (" + packetLength + " bytes): "
+            + receivedMessage);
+    }
   }
 
   public void shutdown() {
