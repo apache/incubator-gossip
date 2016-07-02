@@ -28,12 +28,10 @@ limitations under the License.
 
 There are no official Apache releases for {{ site.data.project.short_name }} yet. You can download and build the latest code from [GitHub]({{ site.data.project.source_repository_mirror }}).
 
-If you are interested in a quick way to download and deploy Rya, you can try the [{{ site.data.project.short_name}} vagrant]({{ site.data.project.source_repository_mirror}}/tree/develop/extras/vagrantExample/src/main/vagrant) script to create a VM with Accumulo and Rya on it. 
-
 
 {% comment %}
 
-TODO: uncoment this when we have official releases of Rya
+TODO: uncoment this when we have official releases of Gossip
 
 {{ site.data.project.name }} is released as a source artifact, and also through Maven.
 

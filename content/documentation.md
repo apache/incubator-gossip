@@ -28,22 +28,14 @@ limitations under the License.
 
 ### Articles
 
-* [SPARQL in the Cloud Using Rya](http://www.usna.edu/Users/CS/adina/research/Rya_ISjournal2013.pdf). Roshan Punnoose, Adina Crainiceanu and David Rapp, Information Systems. Volume 48, March 2015, p. 181-195
-
-* [Rya: A Scalable RDF Triple Store for the Clouds](http://www.usna.edu/Users/cs/adina/research/Rya_CloudI2012.pdf). Roshan Punnoose, Adina Crainiceanu and David Rapp, 1st International Workshop on Cloud Intelligence, Cloud-I, 2012
+* "Network-Friendly Gossiping", Sabina Serbu, Étienne Riviѐre and Pascal Felber, Lecture Notes In Computer Science; Vol. 5873. [@ACM](http://portal.acm.org.proxy.library.uu.nl/citation.cfm?id=1693564.1693611).
 
 
 ### Presentations
 
 
-* [Rya: Optimizations to Support Real Time Graph Queries on Accumulo](http://accumulosummit.com/program/talks/rya-optimizations-to-support-real-time-graph-queries-on-accumulo/). Caleb Meier, Accumulo Summit, 2015
-
-* [Rya: A Scalable RDF Triple Store for the Clouds](http://eric.univ-lyon2.fr/cloud-i/wp-content/uploads/2012/09/4-Rya_ICould2012.pdf). Adina Crainiceanu, 1st International Workshop on Cloud Intelligence, 2012
-
 
 ### {{ site.data.project.short_name }} Manual
-
-A copy of the {{ site.data.project.short_name }} Manual is located [here](https://github.com/apache/incubator-rya/blob/develop/extras/rya.manual/src/site/markdown/index.md) 
 
 
 

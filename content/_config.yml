@@ -17,14 +17,14 @@ markdown: kramdown
 permalink: /news/:year/:month/:day/:title/
 excerpt_separator: ""
 
-repository: https://git-wip-us.apache.org/repos/asf/incubator-rya-site
+repository: https://github.com/apache/incubator-gossip.git
 destination: target
 exclude: [README.md,Gemfile*]
 keep_files: [".git", ".svn", "apidocs"]
 
 # The base path where the website is deployed
 baseurl: / 
-# baseurl: /Users/cs/adina/ryawebsite/target/
+# baseurl: /Users/svaddi/gossipwebsite/target/
 
 # End _config.yml
 

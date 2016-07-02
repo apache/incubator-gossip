@@ -15,20 +15,20 @@
 #
 # Apache Project configurations
 #
-name: Apache Rya (incubating)
-short_name: Rya
-unix_name: rya
-incubator_name: incubator-rya
-incubator_slash_name: incubator/rya
-description: Apache Rya (incubating) is a scalable RDF triple store built on top of a columnar index store (Accumulo).
+name: Apache Gossip™ (incubating)
+short_name: Gossip
+unix_name: gossip
+incubator_name: incubator-gossip
+incubator_slash_name: incubator/gossip
+description: Apache Gossip™ protocol is a method for a group of nodes to discover and check the liveliness of a cluster.
 
 download: download
 
-dev_list: dev@rya.incubator.apache.org
-dev_list_subscribe: dev-subscribe@rya.incubator.apache.org
-dev_list_unsubscribe: dev-unsubscribe@rya.incubator.apache.org
-dev_list_archive: http://mail-archives.apache.org/mod_mbox/rya-dev/
-dev_list_archive_mailarchive: https://www.mail-archive.com/dev@rya.incubator.apache.org/
+dev_list: dev@gossip.incubator.apache.org
+dev_list_subscribe: dev-subscribe@gossip.incubator.apache.org
+dev_list_unsubscribe: dev-unsubscribe@gossip.incubator.apache.org
+dev_list_archive: http://mail-archives.apache.org/mod_mbox/gossip-dev/
+dev_list_archive_mailarchive: https://www.mail-archive.com/dev@gossip.incubator.apache.org/
 dev_list_archive_markmail:
 
 user_list:
@@ -38,27 +38,27 @@ user_list_archive:
 user_list_archive_mailarchive:
 user_list_archive_markmail:
 
-commits_list: commits@rya.incubator.apache.org
-commits_list_subscribe: commits-subscribe@rya.incubator.apache.org
-commits_list_unsubscribe: commits-unsubscribe@rya.incubator.apache.org
-commits_list_archive: http://mail-archives.apache.org/mod_mbox/rya-commits/
-commits_list_archive_mailarchive: https://www.mail-archive.com/commits@rya.incubator.apache.org/
+commits_list: commits@gossip.incubator.apache.org
+commits_list_subscribe: commits-subscribe@gossip.incubator.apache.org
+commits_list_unsubscribe: commits-unsubscribe@gossip.incubator.apache.org
+commits_list_archive: http://mail-archives.apache.org/mod_mbox/gossip-commits/
+commits_list_archive_mailarchive: https://www.mail-archive.com/commits@gossip.incubator.apache.org/
 commits_list_archive_markmail:
 
-notifications_list: notifications@rya.incubator.apache.org
-notifications_list_subscribe: notifications-subscribe@rya.incubator.apache.org
-notifications_list_unsubscribe: notifications-unsubscribe@rya.incubator.apache.org
-notifications_list_archive: http://mail-archives.apache.org/mod_mbox/rya-notifications/
-notifications_list_archive_mailarchive: https://www.mail-archive.com/notifications@rya.incubator.apache.org/
+notifications_list: notifications@gossip.incubator.apache.org
+notifications_list_subscribe: notifications-subscribe@gossip.incubator.apache.org
+notifications_list_unsubscribe: notifications-unsubscribe@gossip.incubator.apache.org
+notifications_list_archive: http://mail-archives.apache.org/mod_mbox/gossip-notifications/
+notifications_list_archive_mailarchive: https://www.mail-archive.com/notifications@gossip.incubator.apache.org/
 notifications_list_archive_markmail:
 
 
-jira: RYA
+jira: GOSSIP
 
-source_repository: https://git-wip-us.apache.org/repos/asf/incubator-rya.git
-source_repository_mirror: https://github.com/apache/incubator-rya
+source_repository: https://git-wip-us.apache.org/repos/asf/incubator-gossip.git
+source_repository_mirror: https://github.com/apache/incubator-gossip.git
 
-website_repository: https://git-wip-us.apache.org/repos/asf/incubator-rya-site.git
-website_repository_mirror: https://github.com/apache/incubator-rya-site
+website_repository: https://github.com/apache/incubator-gossip.git
+website_repository_mirror: https://github.com/apache/incubator-gossip.git
 
 podling: true
