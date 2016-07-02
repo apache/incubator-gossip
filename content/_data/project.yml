@@ -1,0 +1,64 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to you under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# Apache Project configurations
+#
+name: Apache Rya (incubating)
+short_name: Rya
+unix_name: rya
+incubator_name: incubator-rya
+incubator_slash_name: incubator/rya
+description: Apache Rya (incubating) is a scalable RDF triple store built on top of a columnar index store (Accumulo).
+
+download: download
+
+dev_list: dev@rya.incubator.apache.org
+dev_list_subscribe: dev-subscribe@rya.incubator.apache.org
+dev_list_unsubscribe: dev-unsubscribe@rya.incubator.apache.org
+dev_list_archive: http://mail-archives.apache.org/mod_mbox/rya-dev/
+dev_list_archive_mailarchive: https://www.mail-archive.com/dev@rya.incubator.apache.org/
+dev_list_archive_markmail:
+
+user_list:
+user_list_subscribe:
+user_list_unsubscribe:
+user_list_archive:
+user_list_archive_mailarchive:
+user_list_archive_markmail:
+
+commits_list: commits@rya.incubator.apache.org
+commits_list_subscribe: commits-subscribe@rya.incubator.apache.org
+commits_list_unsubscribe: commits-unsubscribe@rya.incubator.apache.org
+commits_list_archive: http://mail-archives.apache.org/mod_mbox/rya-commits/
+commits_list_archive_mailarchive: https://www.mail-archive.com/commits@rya.incubator.apache.org/
+commits_list_archive_markmail:
+
+notifications_list: notifications@rya.incubator.apache.org
+notifications_list_subscribe: notifications-subscribe@rya.incubator.apache.org
+notifications_list_unsubscribe: notifications-unsubscribe@rya.incubator.apache.org
+notifications_list_archive: http://mail-archives.apache.org/mod_mbox/rya-notifications/
+notifications_list_archive_mailarchive: https://www.mail-archive.com/notifications@rya.incubator.apache.org/
+notifications_list_archive_markmail:
+
+
+jira: RYA
+
+source_repository: https://git-wip-us.apache.org/repos/asf/incubator-rya.git
+source_repository_mirror: https://github.com/apache/incubator-rya
+
+website_repository: https://git-wip-us.apache.org/repos/asf/incubator-rya-site.git
+website_repository_mirror: https://github.com/apache/incubator-rya-site
+
+podling: true

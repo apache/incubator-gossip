@@ -1,0 +1,123 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to you under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# Database of contributors to Apache Rya.
+# Pages such as community.md use this data.
+# Please keep the list in alphabetical order.
+#
+- name: Jennifer Brown
+  apacheId: jbrown
+  githubId: 
+  role: Committer
+  org: Parsons
+
+- name: Sean Busbey 
+  apacheId: busbey
+  githubId: busbey
+  role: Mentor
+  org: 
+
+- name: Kevin Chilton
+  apacheId:
+  githubId:
+  role: Contributor
+
+- name: Adina Crainiceanu
+  apacheId: adina
+  githubId: adinancr
+  role: Committer
+  org: US Naval Academy
+
+- name: John Elser
+  apacheId: elserj
+  githubId: elserj
+  org: 
+  role: Mentor
+  homepage: 
+
+- name: Adam Fuchs
+  apacheId: afuchs
+  githubId: 
+  role: Champion
+  org:
+
+- name: Craig Hahn
+  apacheId:
+  githubId:
+  org:
+  role: Contributor
+
+- name: David Lotts
+  apacheId:
+  githubId: dlotts
+  org:
+  role: Contributor
+
+- name: Caleb Meier
+  apacheId:
+  githubId: meiercaleb
+  org:
+  role: Contributor
+
+- name: Aaron Mihalik
+  apacheId: mihalik
+  githubId: amihalik
+  org: Parsons
+  role: Committer
+
+- name: Roshan Punnoose
+  apacheId: roshanp
+  githubId: roshanp
+  org: 
+  role: Committer
+
+- name: David Rapp
+  apacheId: dnrapp
+  githubId: dnrapp
+  org:
+  role: Committer
+
+- name: Puja Valiyil
+  apacheId: pujav65
+  githubId: pujav65
+  org: Parsons
+  role: Committer
+
+- name: Seetharam Venkatesh
+  apacheId: venkatesh
+  githubId: 
+  org: 
+  role: Mentor
+
+- name: Steve Wagner
+  apacheId: swagner
+  githubId: steverwagner
+  org:
+  role: Committer
+
+- name: Amila Wijayarathna
+  apacheId: 
+  githubId: 
+  org:
+  role: Contributor
+
+- name: Edward J. Yoon
+  apacheId: edwardyoon
+  githubId: 
+  org: 
+  role: Mentor
+
+
+# End contributors.yml

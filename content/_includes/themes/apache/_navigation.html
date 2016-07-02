@@ -1,0 +1,52 @@
+    <div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="{{site.baseurl }}">
+              <!-- <img src="/assets/themes/apache/img/logo.png" width="50"> -->
+              {{ site.data.project.name }}
+          </a>
+        </div>
+        <nav class="navbar-collapse collapse" role="navigation">
+          <ul class="nav navbar-nav navbar-right">
+            <li id="community">
+              <a href="#" data-toggle="dropdown" class="dropdown-toggle">Community<b class="caret"></b></a>
+               <ul class="dropdown-menu dropdown-left">
+                <li><a href="{{site.baseurl}}community">Get Involved</a></li>
+                <li><a href="{{site.baseurl}}community-members">Who we are</a></li>
+               </ul>
+            </li>
+            <li><a href="{{site.baseurl}}{{ site.data.project.download }}">Downloads</a></li>
+            <li><a href="{{site.baseurl}}documentation">Documentation</a></li>
+            <li><a href="{{ site.data.project.source_repository_mirror }}">GitHub</a></li>
+             <li id="apache">
+              <a href="#" data-toggle="dropdown" class="dropdown-toggle">Apache<b class="caret"></b></a>
+               <ul class="dropdown-menu">
+                <li><a href="http://www.apache.org/foundation/how-it-works.html">Apache Software Foundation</a></li>
+                <li><a href="http://www.apache.org/licenses/">Apache License</a></li>
+                <li><a href="http://www.apache.org/foundation/sponsorship.html">Sponsorship</a></li>
+                <li><a href="http://www.apache.org/foundation/thanks.html">Thanks</a></li>
+                </ul>
+            </li>
+          </ul>
+        </nav><!--/.navbar-collapse -->
+      </div>
+    </div>
+
+{% if page.title contains "Home" %}
+<div class="jumbotron">
+  <div class="container">
+    <h1>{{ site.data.project.name }}</h1>
+    <p>{{ site.data.project.description }}</p>
+
+    {% if site.data.project.download %}
+       <a href="{{ site.data.project.download }}" class="btn btn-primary btn-lg bigFingerButton" role="button">Get {{ site.data.project.short_name }}</a></p>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
