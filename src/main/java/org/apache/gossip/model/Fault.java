@@ -1,10 +1,10 @@
 package org.apache.gossip.model;
 
-public class ActiveGossipFault extends Response{
+public class Fault extends Response {
 
   private String exception;
 
-  public ActiveGossipFault(){}
+  public Fault(){}
 
   public String getException() {
     return exception;
@@ -16,7 +16,7 @@ public class ActiveGossipFault extends Response{
 
   @Override
   public String toString() {
-    return "ActiveGossipFault [exception=" + exception + "]";
+    return "Fault [exception=" + exception + "]";
   }
 
 }

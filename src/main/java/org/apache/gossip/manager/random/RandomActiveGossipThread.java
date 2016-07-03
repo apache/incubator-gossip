@@ -18,31 +18,38 @@
 package org.apache.gossip.manager.random;
 
 import java.io.IOException;
-import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Random;
+import java.util.UUID;
 
 import org.apache.gossip.GossipService;
 import org.apache.gossip.LocalGossipMember;
 import org.apache.gossip.manager.ActiveGossipThread;
+import org.apache.gossip.manager.GossipCore;
 import org.apache.gossip.manager.GossipManager;
-import org.apache.gossip.model.ActiveGossipMessage;
+import org.apache.gossip.model.ActiveGossipOk;
 import org.apache.gossip.model.GossipMember;
+import org.apache.gossip.model.Response;
+import org.apache.gossip.udp.UdpActiveGossipMessage;
+import org.apache.log4j.Logger;
 import org.codehaus.jackson.map.ObjectMapper;
 
 public class RandomActiveGossipThread extends ActiveGossipThread {
 
-  protected ObjectMapper om = new ObjectMapper();
+  public static final Logger LOGGER = Logger.getLogger(RandomActiveGossipThread.class);
+  protected ObjectMapper MAPPER = new ObjectMapper();
   
   /** The Random used for choosing a member to gossip with. */
   private final Random random;
+  private final GossipCore gossipCore;
 
-  public RandomActiveGossipThread(GossipManager gossipManager) {
+  public RandomActiveGossipThread(GossipManager gossipManager, GossipCore gossipCore) {
     super(gossipManager);
     random = new Random();
+    this.gossipCore = gossipCore;
   }
 
   /**
@@ -71,19 +78,22 @@ public class RandomActiveGossipThread extends ActiveGossipThread {
     }
     try (DatagramSocket socket = new DatagramSocket()) {
       socket.setSoTimeout(gossipManager.getSettings().getGossipInterval());
-      InetAddress dest = InetAddress.getByName(member.getUri().getHost());
-      ActiveGossipMessage message = new ActiveGossipMessage();
+      UdpActiveGossipMessage message = new UdpActiveGossipMessage();
+      message.setUriFrom(gossipManager.getMyself().getUri().toASCIIString());
+      message.setUuid(UUID.randomUUID().toString());
       message.getMembers().add(convert(me));
       for (LocalGossipMember other : memberList) {
         message.getMembers().add(convert(other));
       }
-      byte[] json_bytes = om.writeValueAsString(message).getBytes();
+      byte[] json_bytes = MAPPER.writeValueAsString(message).getBytes();
       int packet_length = json_bytes.length;
       if (packet_length < GossipManager.MAX_PACKET_SIZE) {
-        byte[] buf = createBuffer(packet_length, json_bytes);
-        DatagramPacket datagramPacket = new DatagramPacket(buf, buf.length, dest, member.getUri().getPort());
-        socket.send(datagramPacket);
-        
+        Response r = gossipCore.send(message, member.getUri());
+        if (r instanceof ActiveGossipOk){
+          //maybe count metrics here
+        } else {
+          LOGGER.warn("Message "+ message + " generated response "+ r);
+        }
       } else {
         GossipService.LOGGER.error("The length of the to be send message is too large ("
                 + packet_length + " > " + GossipManager.MAX_PACKET_SIZE + ").");
@@ -91,19 +101,6 @@ public class RandomActiveGossipThread extends ActiveGossipThread {
     } catch (IOException e1) {
       GossipService.LOGGER.warn(e1);
     }
-  }
-
-  private byte[] createBuffer(int packetLength, byte[] jsonBytes) {
-    byte[] lengthBytes = new byte[4];
-    lengthBytes[0] = (byte) (packetLength >> 24);
-    lengthBytes[1] = (byte) ((packetLength << 8) >> 24);
-    lengthBytes[2] = (byte) ((packetLength << 16) >> 24);
-    lengthBytes[3] = (byte) ((packetLength << 24) >> 24);
-    ByteBuffer byteBuffer = ByteBuffer.allocate(4 + jsonBytes.length);
-    byteBuffer.put(lengthBytes);
-    byteBuffer.put(jsonBytes);
-    byte[] buf = byteBuffer.array();
-    return buf;
   }
   
   private GossipMember convert(LocalGossipMember member){

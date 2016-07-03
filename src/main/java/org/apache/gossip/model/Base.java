@@ -10,7 +10,7 @@ import org.codehaus.jackson.annotate.JsonTypeInfo;
         property = "type") 
 @JsonSubTypes({
         @Type(value = ActiveGossipMessage.class, name = "ActiveGossipMessage"),
-        @Type(value = ActiveGossipFault.class, name = "ActiveGossipFault"),
+        @Type(value = Fault.class, name = "ActiveGossipFault"),
         @Type(value = ActiveGossipOk.class, name = "ActiveGossipOk")
         })
 public class Base {

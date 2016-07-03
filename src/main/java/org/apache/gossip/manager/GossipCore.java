@@ -8,31 +8,43 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.gossip.GossipMember;
 import org.apache.gossip.LocalGossipMember;
 import org.apache.gossip.RemoteGossipMember;
-import org.apache.gossip.model.ActiveGossipFault;
+import org.apache.gossip.model.Fault;
+import org.apache.gossip.model.NotAMemberFault;
 import org.apache.gossip.model.ActiveGossipMessage;
 import org.apache.gossip.model.ActiveGossipOk;
 import org.apache.gossip.model.Base;
-import org.apache.gossip.model.Message;
 import org.apache.gossip.model.Response;
+import org.apache.gossip.udp.Trackable;
 import org.apache.log4j.Logger;
 import org.codehaus.jackson.map.ObjectMapper;
 
 public class GossipCore {
   
-  private final GossipManager gossipManager;
   public static final Logger LOGGER = Logger.getLogger(GossipCore.class);
+  private static final ObjectMapper MAPPER = new ObjectMapper();
+  private final GossipManager gossipManager;
 
+  private ConcurrentHashMap<String, Base> requests;
+  
   public GossipCore(GossipManager manager){
     this.gossipManager = manager;
+    requests = new ConcurrentHashMap<>();
   }
   
   public void recieve(Base base){
     if (base instanceof Response){
-      System.out.println("gory response" + base);
+      if (base instanceof Trackable){
+        Trackable t = (Trackable) base;
+        requests.put(t.getUuid() + "/" + t.getUriFrom(), (Base) t);
+      }
     }
     if (base instanceof ActiveGossipMessage){
       List<GossipMember> remoteGossipMembers = new ArrayList<>();
@@ -52,48 +64,89 @@ public class GossipCore {
                 activeGossipMessage.getMembers().get(i).getId(),
                 activeGossipMessage.getMembers().get(i).getHeartbeat());
        
-        // This is the first member found, so this should be the member who is communicating
-        // with me.
         if (i == 0) {
           senderMember = member;
         } 
         if (!(member.getClusterName().equals(gossipManager.getMyself().getClusterName()))){
-          LOGGER.warn("Not a member of this cluster " + i);
-          ActiveGossipFault f = new ActiveGossipFault();
-          f.setException("Not a member of this cluster");
+          Fault f = new NotAMemberFault("Not a member of this cluster " + i);
+          LOGGER.warn(f);
           sendOneWay(f, member.getUri());
-
           continue;
         }
         remoteGossipMembers.add(member);
-        ActiveGossipOk o = new ActiveGossipOk();
-        sendOneWay(o, member.getUri());
       }
-
+      ActiveGossipOk o = new ActiveGossipOk();
+      sendOneWay(o, senderMember.getUri());
       mergeLists(gossipManager, senderMember, remoteGossipMembers);
     }
   }
   
-  ObjectMapper mapper = new ObjectMapper();
-  public Response send(Base message, LocalGossipMember partner){
-    /*
-    byte[] json_bytes = mapper.writeValueAsString(message).getBytes();
+  private void sendInternal(Base message, URI uri){
+    byte[] json_bytes;
+    try {
+      json_bytes = MAPPER.writeValueAsString(message).getBytes();
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
     int packet_length = json_bytes.length;
     if (packet_length < GossipManager.MAX_PACKET_SIZE) {
       byte[] buf = UdpUtil.createBuffer(packet_length, json_bytes);
       try (DatagramSocket socket = new DatagramSocket()) {
-        InetAddress dest = InetAddress.getByName(partner.getUri().getHost());
-        DatagramPacket datagramPacket = new DatagramPacket(buf, buf.length, dest, partner.getUri().getPort());
+        InetAddress dest = InetAddress.getByName(uri.getHost());
+        DatagramPacket datagramPacket = new DatagramPacket(buf, buf.length, dest, uri.getPort());
         socket.send(datagramPacket);
+      } catch (IOException e) {
+        throw new RuntimeException(e);
       } 
-    }*/
-    return null;
+    }
+  }
+  
+  public Response send(Base message, URI uri){
+    final Trackable t;
+    if (message instanceof Trackable){
+      t = (Trackable) message;
+      requests.put(t.getUuid(), message);
+    } else {
+      t = null;
+    }
+    sendInternal(message, uri);
+    if (t == null){
+      return null;
+    }
+    final CountDownLatch l = new CountDownLatch(1);
+    final AtomicReference<Response> r = new AtomicReference<>();
+    Thread thread = new Thread(){
+      public void run(){
+        while (true){
+          Base b = requests.get(t.getUuid() + "/" + t.getUriFrom());
+          if (b != null){
+            requests.remove(t.getUuid() + "/" + t.getUriFrom());
+          }
+          r.set((Response) b);
+          l.countDown();
+          try {
+            Thread.sleep(0, 1000);
+          } catch (InterruptedException e) {
+          }
+        }
+        
+      }
+    };
+    thread.start();
+    try {
+      l.await(10, TimeUnit.SECONDS);
+    } catch (InterruptedException e) {
+      throw new RuntimeException(e);
+    } finally {
+      requests.remove(t.getUuid() + "/" + t.getUriFrom());
+    }
+    return r.get();
   }
   
   public void sendOneWay(Base message, URI u){
     byte[] json_bytes;
     try {
-      json_bytes = mapper.writeValueAsString(message).getBytes();
+      json_bytes = MAPPER.writeValueAsString(message).getBytes();
     } catch (IOException e) {
       throw new RuntimeException(e);
     }

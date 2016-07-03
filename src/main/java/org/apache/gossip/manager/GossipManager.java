@@ -41,6 +41,7 @@ import org.apache.gossip.GossipSettings;
 import org.apache.gossip.LocalGossipMember;
 import org.apache.gossip.event.GossipListener;
 import org.apache.gossip.event.GossipState;
+import org.apache.gossip.manager.random.RandomActiveGossipThread;
 
 public abstract class GossipManager extends Thread implements NotificationListener {
 
@@ -67,6 +68,8 @@ public abstract class GossipManager extends Thread implements NotificationListen
   private PassiveGossipThread passiveGossipThread;
 
   private ExecutorService gossipThreadExecutor;
+  
+  private GossipCore gossipCore;
 
   public GossipManager(Class<? extends PassiveGossipThread> passiveGossipThreadClass,
           Class<? extends ActiveGossipThread> activeGossipThreadClass, String cluster,
@@ -75,6 +78,7 @@ public abstract class GossipManager extends Thread implements NotificationListen
     this.passiveGossipThreadClass = passiveGossipThreadClass;
     this.activeGossipThreadClass = activeGossipThreadClass;
     this.settings = settings;
+    this.gossipCore = new GossipCore(this);
     me = new LocalGossipMember(cluster, uri, id, System.currentTimeMillis(), this,
             settings.getCleanupInterval());
     members = new ConcurrentSkipListMap<>();
@@ -177,8 +181,7 @@ public abstract class GossipManager extends Thread implements NotificationListen
       passiveGossipThread = passiveGossipThreadClass.getConstructor(GossipManager.class)
               .newInstance(this);
       gossipThreadExecutor.execute(passiveGossipThread);
-      activeGossipThread = activeGossipThreadClass.getConstructor(GossipManager.class)
-              .newInstance(this);
+      activeGossipThread = new RandomActiveGossipThread(this, this.gossipCore);
       gossipThreadExecutor.execute(activeGossipThread);
     } catch (InstantiationException | IllegalAccessException | IllegalArgumentException
             | InvocationTargetException | NoSuchMethodException | SecurityException e1) {
