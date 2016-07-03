@@ -46,19 +46,16 @@ abstract public class PassiveGossipThread implements Runnable {
   /** The socket used for the passive thread of the gossip service. */
   private final DatagramSocket server;
 
-  private final GossipManager gossipManager;
-
   private final AtomicBoolean keepRunning;
 
   private final String cluster;
   
   private final ObjectMapper MAPPER = new ObjectMapper();
   
-  private GossipCore gossipCore;
+  private final GossipCore gossipCore;
 
-  public PassiveGossipThread(GossipManager gossipManager) {
-    this.gossipManager = gossipManager;
-    gossipCore = new GossipCore(gossipManager);
+  public PassiveGossipThread(GossipManager gossipManager, GossipCore gossipCore) {
+    this.gossipCore = gossipCore;
     try {
       SocketAddress socketAddress = new InetSocketAddress(gossipManager.getMyself().getUri().getHost(),
               gossipManager.getMyself().getUri().getPort());

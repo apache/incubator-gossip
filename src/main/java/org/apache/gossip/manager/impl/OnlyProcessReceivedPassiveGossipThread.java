@@ -22,6 +22,7 @@ import java.util.List;
 import org.apache.gossip.GossipMember;
 import org.apache.gossip.LocalGossipMember;
 import org.apache.gossip.RemoteGossipMember;
+import org.apache.gossip.manager.GossipCore;
 import org.apache.gossip.manager.GossipManager;
 import org.apache.gossip.manager.PassiveGossipThread;
 import org.apache.log4j.Logger;
@@ -30,8 +31,8 @@ public class OnlyProcessReceivedPassiveGossipThread extends PassiveGossipThread 
   
   public static final Logger LOGGER = Logger.getLogger(OnlyProcessReceivedPassiveGossipThread.class);
 
-  public OnlyProcessReceivedPassiveGossipThread(GossipManager gossipManager) {
-    super(gossipManager);
+  public OnlyProcessReceivedPassiveGossipThread(GossipManager gossipManager, GossipCore gossipCore) {
+    super(gossipManager, gossipCore);
   }
 
   /**

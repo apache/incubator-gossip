@@ -85,18 +85,15 @@ public class RandomGossipManager extends GossipManager {
       checkArgument(cluster != null, "You must specify a cluster name");
       checkArgument(settings != null, "You must specify gossip settings");
       checkArgument(uri != null, "You must specify a uri");
-
       if (this.gossipMembers == null) {
         this.gossipMembers = new ArrayList<>();
       }
-
       return new RandomGossipManager(cluster, uri, id, settings, gossipMembers, listener);
     }
   }
 
   private RandomGossipManager(String cluster, URI uri, String id, GossipSettings settings, 
           List<GossipMember> gossipMembers, GossipListener listener) {
-    super(OnlyProcessReceivedPassiveGossipThread.class, RandomActiveGossipThread.class, cluster,
-            uri, id, settings, gossipMembers, listener);
+    super(cluster, uri, id, settings, gossipMembers, listener);
   }
 }

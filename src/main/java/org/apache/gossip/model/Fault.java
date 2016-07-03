@@ -1,6 +1,6 @@
 package org.apache.gossip.model;
 
-public class Fault extends Response {
+public abstract class Fault extends Response {
 
   private String exception;
 
