@@ -23,8 +23,7 @@ exclude: [README.md,Gemfile*]
 keep_files: [".git", ".svn", "apidocs"]
 
 # The base path where the website is deployed
-baseurl: / 
+baseurl: "" 
 # baseurl: /Users/svaddi/gossipwebsite/target/
 
 # End _config.yml
-
