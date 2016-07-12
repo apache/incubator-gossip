@@ -17,8 +17,6 @@
  */
 package org.apache.gossip.manager;
 
-import java.lang.reflect.InvocationTargetException;
-import java.net.BindException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -193,6 +191,7 @@ public abstract class GossipManager extends Thread implements NotificationListen
   public void shutdown() {
     gossipServiceRunning.set(false);
     gossipThreadExecutor.shutdown();
+    gossipCore.shutdown();
     if (passiveGossipThread != null) {
       passiveGossipThread.shutdown();
     }

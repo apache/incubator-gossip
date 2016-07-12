@@ -8,21 +8,24 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
-
+import java.util.concurrent.TimeoutException;
 import org.apache.gossip.GossipMember;
 import org.apache.gossip.LocalGossipMember;
 import org.apache.gossip.RemoteGossipMember;
-import org.apache.gossip.model.Fault;
-import org.apache.gossip.model.NotAMemberFault;
 import org.apache.gossip.model.ActiveGossipMessage;
-import org.apache.gossip.model.ActiveGossipOk;
 import org.apache.gossip.model.Base;
 import org.apache.gossip.model.Response;
 import org.apache.gossip.udp.Trackable;
+import org.apache.gossip.udp.UdpActiveGossipMessage;
+import org.apache.gossip.udp.UdpActiveGossipOk;
+import org.apache.gossip.udp.UdpNotAMemberFault;
 import org.apache.log4j.Logger;
 import org.codehaus.jackson.map.ObjectMapper;
 
@@ -34,9 +37,21 @@ public class GossipCore {
 
   private ConcurrentHashMap<String, Base> requests;
   
+  private ExecutorService service;
+  
   public GossipCore(GossipManager manager){
     this.gossipManager = manager;
     requests = new ConcurrentHashMap<>();
+    service = Executors.newFixedThreadPool(500);
+  }
+  
+  public void shutdown(){
+    service.shutdown();
+    try {
+      service.awaitTermination(5, TimeUnit.SECONDS);
+    } catch (InterruptedException e) {
+      LOGGER.warn(e);
+    }
   }
   
   public void recieve(Base base){
@@ -49,7 +64,7 @@ public class GossipCore {
     if (base instanceof ActiveGossipMessage){
       List<GossipMember> remoteGossipMembers = new ArrayList<>();
       RemoteGossipMember senderMember = null;
-      ActiveGossipMessage activeGossipMessage = (ActiveGossipMessage) base;
+      UdpActiveGossipMessage activeGossipMessage = (UdpActiveGossipMessage) base;
       for (int i = 0; i < activeGossipMessage.getMembers().size(); i++) {
         URI u = null;
         try {
@@ -63,19 +78,23 @@ public class GossipCore {
                 u,
                 activeGossipMessage.getMembers().get(i).getId(),
                 activeGossipMessage.getMembers().get(i).getHeartbeat());
-       
         if (i == 0) {
           senderMember = member;
         } 
         if (!(member.getClusterName().equals(gossipManager.getMyself().getClusterName()))){
-          Fault f = new NotAMemberFault("Not a member of this cluster " + i);
+          UdpNotAMemberFault f = new UdpNotAMemberFault();
+          f.setException("Not a member of this cluster " + i);
+          f.setUriFrom(activeGossipMessage.getUriFrom());
+          f.setUuid(activeGossipMessage.getUuid());
           LOGGER.warn(f);
           sendOneWay(f, member.getUri());
           continue;
         }
         remoteGossipMembers.add(member);
       }
-      ActiveGossipOk o = new ActiveGossipOk();
+      UdpActiveGossipOk o = new UdpActiveGossipOk();
+      o.setUriFrom(activeGossipMessage.getUriFrom());
+      o.setUuid(activeGossipMessage.getUuid());
       sendOneWay(o, senderMember.getUri());
       mergeLists(gossipManager, senderMember, remoteGossipMembers);
     }
@@ -105,7 +124,6 @@ public class GossipCore {
     final Trackable t;
     if (message instanceof Trackable){
       t = (Trackable) message;
-      requests.put(t.getUuid(), message);
     } else {
       t = null;
     }
@@ -113,34 +131,39 @@ public class GossipCore {
     if (t == null){
       return null;
     }
-    final CountDownLatch l = new CountDownLatch(1);
-    final AtomicReference<Response> r = new AtomicReference<>();
-    Thread thread = new Thread(){
-      public void run(){
-        while (true){
-          Base b = requests.get(t.getUuid() + "/" + t.getUriFrom());
+    Future<Response> response = service.submit( new Callable<Response>(){
+      @Override
+      public Response call() throws Exception {
+        while(true){
+          Base b = requests.remove(t.getUuid() + "/" + t.getUriFrom());
           if (b != null){
-            requests.remove(t.getUuid() + "/" + t.getUriFrom());
+            return (Response) b;
           }
-          r.set((Response) b);
-          l.countDown();
           try {
             Thread.sleep(0, 1000);
           } catch (InterruptedException e) {
+            
           }
         }
-        
       }
-    };
-    thread.start();
+    });
+    
     try {
-      l.await(10, TimeUnit.SECONDS);
+      return response.get(10, TimeUnit.SECONDS);
     } catch (InterruptedException e) {
       throw new RuntimeException(e);
+    } catch (ExecutionException e) {
+      System.err.println(e);
+      return null;
+    } catch (TimeoutException e) {
+      System.err.println(e);
+      return null; 
     } finally {
-      requests.remove(t.getUuid() + "/" + t.getUriFrom());
+      if (t != null){
+        requests.remove(t.getUuid() + "/" + t.getUriFrom());
+      }
     }
-    return r.get();
+    
   }
   
   public void sendOneWay(Base message, URI u){
