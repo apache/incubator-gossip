@@ -22,10 +22,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.management.Notification;
@@ -42,7 +44,7 @@ import org.apache.gossip.event.GossipState;
 import org.apache.gossip.manager.impl.OnlyProcessReceivedPassiveGossipThread;
 import org.apache.gossip.manager.random.RandomActiveGossipThread;
 
-public abstract class GossipManager extends Thread implements NotificationListener {
+public abstract class GossipManager implements Callable<Boolean>, NotificationListener {
 
   public static final Logger LOGGER = Logger.getLogger(GossipManager.class);
 
@@ -65,11 +67,21 @@ public abstract class GossipManager extends Thread implements NotificationListen
   private ExecutorService gossipThreadExecutor;
   
   private GossipCore gossipCore;
+  
+  protected final String name;
+
 
   public GossipManager(String cluster,
           URI uri, String id, GossipSettings settings,
           List<GossipMember> gossipMembers, GossipListener listener) {
-    
+    this("default-gossip-manager", cluster, uri, id, settings, gossipMembers, listener);
+  }
+
+  public GossipManager(String name, String cluster, URI uri, String id, 
+		               GossipSettings settings, 
+		               List<GossipMember> gossipMembers, 
+		               GossipListener listener) {
+    this.name = name;
     this.settings = settings;
     this.gossipCore = new GossipCore(this);
     me = new LocalGossipMember(cluster, uri, id, System.currentTimeMillis(), this,
@@ -92,6 +104,10 @@ public abstract class GossipManager extends Thread implements NotificationListen
         GossipService.LOGGER.debug("Service has been shutdown...");
       }
     }));
+  }
+  
+  public String getName() {
+	return this.name;
   }
 
   /**
@@ -164,25 +180,25 @@ public abstract class GossipManager extends Thread implements NotificationListen
    * Starts the client. Specifically, start the various cycles for this protocol. Start the gossip
    * thread and start the receiver thread.
    */
-  public void run() {
+  @Override 
+  public Boolean call() throws Exception {
     for (LocalGossipMember member : members.keySet()) {
       if (member != me) {
         member.startTimeoutTimer();
       }
     }
     passiveGossipThread = new OnlyProcessReceivedPassiveGossipThread(this, gossipCore);
-    gossipThreadExecutor.execute(passiveGossipThread);
+    final Future<Boolean> passiveThreadFuture = gossipThreadExecutor.submit(passiveGossipThread);
     activeGossipThread = new RandomActiveGossipThread(this, this.gossipCore);
-    gossipThreadExecutor.execute(activeGossipThread);
+    final Future<Boolean> activeThreadFuture = gossipThreadExecutor.submit(activeGossipThread);
     GossipService.LOGGER.debug("The GossipService is started.");
-    while (gossipServiceRunning.get()) {
-      try {
-        // TODO
-        TimeUnit.MILLISECONDS.sleep(1);
-      } catch (InterruptedException e) {
-        GossipService.LOGGER.warn("The GossipClient was interrupted.");
-      }
-    }
+    Boolean passiveThreadResult = passiveThreadFuture.get();
+    if(LOGGER.isDebugEnabled())
+      LOGGER.debug("Passive thread returns "+passiveThreadResult);
+    Boolean activeThreadResult = activeThreadFuture.get();
+    if(LOGGER.isDebugEnabled())
+      LOGGER.debug("Active thread returns "+activeThreadResult);
+    return gossipServiceRunning.get();
   }
 
   /**

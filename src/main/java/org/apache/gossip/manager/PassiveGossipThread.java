@@ -24,6 +24,7 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.SocketException;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.gossip.GossipMember;
@@ -39,7 +40,7 @@ import org.apache.gossip.RemoteGossipMember;
  * membership list, but if you choose to gossip additional information, you will need some logic to
  * determine the incoming message.
  */
-abstract public class PassiveGossipThread implements Runnable {
+abstract public class PassiveGossipThread implements Callable<Boolean> {
 
   public static final Logger LOGGER = Logger.getLogger(PassiveGossipThread.class);
 
@@ -75,7 +76,7 @@ abstract public class PassiveGossipThread implements Runnable {
   }
 
   @Override
-  public void run() {
+  public Boolean call() throws Exception {
     while (keepRunning.get()) {
       try {
         byte[] buf = new byte[server.getReceiveBufferSize()];
@@ -104,6 +105,7 @@ abstract public class PassiveGossipThread implements Runnable {
       }
     }
     shutdown();
+    return keepRunning.get();
   }
 
   private void debug(int packetLength, byte[] jsonBytes) {

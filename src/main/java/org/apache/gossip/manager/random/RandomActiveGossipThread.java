@@ -19,11 +19,9 @@ package org.apache.gossip.manager.random;
 
 import java.io.IOException;
 import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Random;
-import java.util.UUID;
+import java.util.UUID; 
 
 import org.apache.gossip.GossipService;
 import org.apache.gossip.LocalGossipMember;

@@ -130,10 +130,11 @@ public class ShutdownDeadtimeTest {
                   total += clients.get(i).get_gossipManager().getMemberList().size();
               }
               return total;
-          }}).afterWaitingAtMost(20, TimeUnit.SECONDS).isEqualTo(20);
+          }}).afterWaitingAtMost(40, TimeUnit.SECONDS).isEqualTo(20);
       
       for (int i = 0; i < clusterMembers; ++i) {
         clients.get(i).shutdown();
       }
   }
 }
+

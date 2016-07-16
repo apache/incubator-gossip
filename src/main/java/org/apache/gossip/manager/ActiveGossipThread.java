@@ -18,6 +18,7 @@
 package org.apache.gossip.manager;
 
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -29,7 +30,7 @@ import org.apache.gossip.LocalGossipMember;
  * list. This information is important to maintaining a common state among all the nodes, and is
  * important for detecting failures.
  */
-abstract public class ActiveGossipThread implements Runnable {
+abstract public class ActiveGossipThread implements Callable<Boolean> {
 
   protected final GossipManager gossipManager;
 
@@ -41,7 +42,7 @@ abstract public class ActiveGossipThread implements Runnable {
   }
 
   @Override
-  public void run() {
+  public Boolean call() throws Exception {
     while (keepRunning.get()) {
       try {
         TimeUnit.MILLISECONDS.sleep(gossipManager.getSettings().getGossipInterval());
@@ -52,6 +53,7 @@ abstract public class ActiveGossipThread implements Runnable {
       }
     }
     shutdown();
+    return keepRunning.get();
   }
 
   public void shutdown() {
