@@ -57,7 +57,11 @@ abstract public class ActiveGossipThread implements Runnable, Shutdownable {
   @Override
   public void run() {
     while (keepRunning.get()) {
-      sendMembershipList(gossipManager.getMyself(), gossipManager.getMemberList());
+        // contact a live member.
+        sendMembershipList(gossipManager.getMyself(), gossipManager.getLiveMembers());
+        
+        // contact a dead member.
+        sendMembershipList(gossipManager.getMyself(), gossipManager.getDeadMembers());
     }
     shutdown();
   }

@@ -32,10 +32,6 @@ import java.util.concurrent.TimeUnit;
 import org.apache.log4j.Logger;
 import org.junit.Test;
 
-import org.apache.gossip.GossipMember;
-import org.apache.gossip.GossipService;
-import org.apache.gossip.GossipSettings;
-import org.apache.gossip.RemoteGossipMember;
 import org.apache.gossip.event.GossipListener;
 import org.apache.gossip.event.GossipState;
 
@@ -84,7 +80,7 @@ public class TenNodeThreeSeedTest {
       public Integer call() throws Exception {
         int total = 0;
         for (int i = 0; i < clusterMembers; ++i) {
-          total += clients.get(i).get_gossipManager().getMemberList().size();
+          total += clients.get(i).get_gossipManager().getLiveMembers().size();
         }
         return total;
       }}).afterWaitingAtMost(20, TimeUnit.SECONDS).isEqualTo(20);

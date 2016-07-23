@@ -74,7 +74,7 @@ public class RandomGossipManagerBuilderTest {
         .settings(new GossipSettings())
         .gossipMembers(null).build();
 
-    Assert.assertNotNull(gossipManager.getMemberList());
+    Assert.assertNotNull(gossipManager.getLiveMembers());
   }
 
   @Test
@@ -89,8 +89,8 @@ public class RandomGossipManagerBuilderTest {
         .settings(new GossipSettings())
         .uri(new URI("udp://localhost:8000"))
         .gossipMembers(memberList).build();
-    Assert.assertEquals(1, gossipManager.getMemberList().size());
-    Assert.assertEquals(member.getId(), gossipManager.getMemberList().get(0).getId());
+    Assert.assertEquals(1, gossipManager.getLiveMembers().size());
+    Assert.assertEquals(member.getId(), gossipManager.getLiveMembers().get(0).getId());
   }
 
 }

@@ -57,7 +57,7 @@ public class OnlyProcessReceivedPassiveGossipThread extends PassiveGossipThread 
                 senderMember.getUri(), senderMember.getId(),
                 senderMember.getHeartbeat(), gossipManager, gossipManager.getSettings()
                         .getCleanupInterval());
-        gossipManager.revivieMember(newLocalMember);
+        gossipManager.reviveMember(newLocalMember);
         newLocalMember.startTimeoutTimer();
       }
     }
@@ -65,20 +65,20 @@ public class OnlyProcessReceivedPassiveGossipThread extends PassiveGossipThread 
       if (remoteMember.getId().equals(gossipManager.getMyself().getId())) {
         continue;
       }
-      if (gossipManager.getMemberList().contains(remoteMember)) {
-        LocalGossipMember localMember = gossipManager.getMemberList().get(
-                gossipManager.getMemberList().indexOf(remoteMember));
+      if (gossipManager.getLiveMembers().contains(remoteMember)) {
+        LocalGossipMember localMember = gossipManager.getLiveMembers().get(
+                gossipManager.getLiveMembers().indexOf(remoteMember));
         if (remoteMember.getHeartbeat() > localMember.getHeartbeat()) {
           localMember.setHeartbeat(remoteMember.getHeartbeat());
           localMember.resetTimeoutTimer();
         }
-      } else if (!gossipManager.getMemberList().contains(remoteMember)
+      } else if (!gossipManager.getLiveMembers().contains(remoteMember)
               && !gossipManager.getDeadList().contains(remoteMember)) {
         LocalGossipMember newLocalMember = new LocalGossipMember(remoteMember.getClusterName(),
                 remoteMember.getUri(), remoteMember.getId(),
                 remoteMember.getHeartbeat(), gossipManager, gossipManager.getSettings()
                         .getCleanupInterval());
-        gossipManager.createOrRevivieMember(newLocalMember);
+        gossipManager.createOrReviveMember(newLocalMember);
         newLocalMember.startTimeoutTimer();
       } else {
         if (gossipManager.getDeadList().contains(remoteMember)) {
@@ -89,7 +89,7 @@ public class OnlyProcessReceivedPassiveGossipThread extends PassiveGossipThread 
                     remoteMember.getUri(), remoteMember.getId(),
                     remoteMember.getHeartbeat(), gossipManager, gossipManager.getSettings()
                             .getCleanupInterval());
-            gossipManager.revivieMember(newLocalMember);
+            gossipManager.reviveMember(newLocalMember);
             newLocalMember.startTimeoutTimer();
             LOGGER.debug("Removed remote member " + remoteMember.getAddress()
                     + " from dead list and added to local member list.");
@@ -97,14 +97,14 @@ public class OnlyProcessReceivedPassiveGossipThread extends PassiveGossipThread 
             LOGGER.debug("me " + gossipManager.getMyself());
             LOGGER.debug("sender " + senderMember);
             LOGGER.debug("remote " + remoteList);
-            LOGGER.debug("live " + gossipManager.getMemberList());
+            LOGGER.debug("live " + gossipManager.getLiveMembers());
             LOGGER.debug("dead " + gossipManager.getDeadList());
           }
         } else {
           LOGGER.debug("me " + gossipManager.getMyself());
           LOGGER.debug("sender " + senderMember);
           LOGGER.debug("remote " + remoteList);
-          LOGGER.debug("live " + gossipManager.getMemberList());
+          LOGGER.debug("live " + gossipManager.getLiveMembers());
           LOGGER.debug("dead " + gossipManager.getDeadList());
           // throw new IllegalArgumentException("wtf");
         }

@@ -17,10 +17,6 @@
  */
 package org.apache.gossip;
 
-import org.apache.gossip.GossipMember;
-import org.apache.gossip.GossipService;
-import org.apache.gossip.GossipSettings;
-import org.apache.gossip.StartupSettings;
 import org.apache.log4j.Logger;
 import org.json.JSONException;
 import org.junit.Test;
@@ -60,7 +56,7 @@ public class StartupSettingsTest {
     
     TUnit.assertThat(new Callable<Integer> (){
       public Integer call() throws Exception {
-          return firstService.get_gossipManager().getMemberList().size();
+          return firstService.get_gossipManager().getLiveMembers().size();
       }}).afterWaitingAtMost(30, TimeUnit.SECONDS).isEqualTo(0);
     final GossipService serviceUnderTest = new GossipService(
             StartupSettings.fromJSONFile( settingsFile )
@@ -68,7 +64,7 @@ public class StartupSettingsTest {
     serviceUnderTest.start();
     TUnit.assertThat(new Callable<Integer> (){
       public Integer call() throws Exception {
-          return serviceUnderTest.get_gossipManager().getMemberList().size();
+          return serviceUnderTest.get_gossipManager().getLiveMembers().size();
       }}).afterWaitingAtMost(10, TimeUnit.SECONDS).isEqualTo(1);
     firstService.shutdown();
     serviceUnderTest.shutdown();

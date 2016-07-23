@@ -131,7 +131,7 @@ public class GossipCore {
     if (t == null){
       return null;
     }
-    Future<Response> response = service.submit( new Callable<Response>(){
+    final Future<Response> response = service.submit( new Callable<Response>(){
       @Override
       public Response call() throws Exception {
         while(true){
@@ -153,10 +153,11 @@ public class GossipCore {
     } catch (InterruptedException e) {
       throw new RuntimeException(e);
     } catch (ExecutionException e) {
-      System.err.println(e);
+      LOGGER.error(e.getMessage(), e);
       return null;
     } catch (TimeoutException e) {
-      System.err.println(e);
+      boolean cancelled = response.cancel(true);
+      LOGGER.error(String.format("Threadpool timeout attempting to contact %s, cancelled ? %b", uri.toString(), cancelled));
       return null; 
     } finally {
       if (t != null){
@@ -207,7 +208,7 @@ public class GossipCore {
                 senderMember.getUri(), senderMember.getId(),
                 senderMember.getHeartbeat(), gossipManager, gossipManager.getSettings()
                         .getCleanupInterval());
-        gossipManager.revivieMember(newLocalMember);
+        gossipManager.reviveMember(newLocalMember);
         newLocalMember.startTimeoutTimer();
       }
     }
@@ -215,20 +216,20 @@ public class GossipCore {
       if (remoteMember.getId().equals(gossipManager.getMyself().getId())) {
         continue;
       }
-      if (gossipManager.getMemberList().contains(remoteMember)) {
-        LocalGossipMember localMember = gossipManager.getMemberList().get(
-                gossipManager.getMemberList().indexOf(remoteMember));
+      if (gossipManager.getLiveMembers().contains(remoteMember)) {
+        LocalGossipMember localMember = gossipManager.getLiveMembers().get(
+                gossipManager.getLiveMembers().indexOf(remoteMember));
         if (remoteMember.getHeartbeat() > localMember.getHeartbeat()) {
           localMember.setHeartbeat(remoteMember.getHeartbeat());
           localMember.resetTimeoutTimer();
         }
-      } else if (!gossipManager.getMemberList().contains(remoteMember)
+      } else if (!gossipManager.getLiveMembers().contains(remoteMember)
               && !gossipManager.getDeadList().contains(remoteMember)) {
         LocalGossipMember newLocalMember = new LocalGossipMember(remoteMember.getClusterName(),
                 remoteMember.getUri(), remoteMember.getId(),
                 remoteMember.getHeartbeat(), gossipManager, gossipManager.getSettings()
                         .getCleanupInterval());
-        gossipManager.createOrRevivieMember(newLocalMember);
+        gossipManager.createOrReviveMember(newLocalMember);
         newLocalMember.startTimeoutTimer();
       } else {
         if (gossipManager.getDeadList().contains(remoteMember)) {
@@ -239,7 +240,7 @@ public class GossipCore {
                     remoteMember.getUri(), remoteMember.getId(),
                     remoteMember.getHeartbeat(), gossipManager, gossipManager.getSettings()
                             .getCleanupInterval());
-            gossipManager.revivieMember(newLocalMember);
+            gossipManager.reviveMember(newLocalMember);
             newLocalMember.startTimeoutTimer();
             LOGGER.debug("Removed remote member " + remoteMember.getAddress()
                     + " from dead list and added to local member list.");
@@ -247,14 +248,14 @@ public class GossipCore {
             LOGGER.debug("me " + gossipManager.getMyself());
             LOGGER.debug("sender " + senderMember);
             LOGGER.debug("remote " + remoteList);
-            LOGGER.debug("live " + gossipManager.getMemberList());
+            LOGGER.debug("live " + gossipManager.getLiveMembers());
             LOGGER.debug("dead " + gossipManager.getDeadList());
           }
         } else {
           LOGGER.debug("me " + gossipManager.getMyself());
           LOGGER.debug("sender " + senderMember);
           LOGGER.debug("remote " + remoteList);
-          LOGGER.debug("live " + gossipManager.getMemberList());
+          LOGGER.debug("live " + gossipManager.getLiveMembers());
           LOGGER.debug("dead " + gossipManager.getDeadList());
           // throw new IllegalArgumentException("wtf");
         }

@@ -109,7 +109,7 @@ public abstract class GossipManager extends Thread implements  NotificationListe
     }
   }
 
-  public void revivieMember(LocalGossipMember m) {
+  public void reviveMember(LocalGossipMember m) {
     for (Entry<LocalGossipMember, GossipState> it : this.members.entrySet()) {
       if (it.getKey().getId().equals(m.getId())) {
         it.getKey().disableTimer();
@@ -122,7 +122,7 @@ public abstract class GossipManager extends Thread implements  NotificationListe
     }
   }
 
-  public void createOrRevivieMember(LocalGossipMember m) {
+  public void createOrReviveMember(LocalGossipMember m) {
     members.put(m, GossipState.UP);
     if (listener != null) {
       listener.gossipEvent(m, GossipState.UP);
@@ -133,11 +133,26 @@ public abstract class GossipManager extends Thread implements  NotificationListe
     return settings;
   }
 
+  // TODO: Use some java 8 goodness for these functions.
+  
+  /**
+   * @return a read only list of members found in the DOWN state.
+   */
+  public List<LocalGossipMember> getDeadMembers() {
+    List<LocalGossipMember> down = new ArrayList<>();
+    for (Entry<LocalGossipMember, GossipState> entry : members.entrySet()) {
+      if (GossipState.DOWN.equals(entry.getValue())) {
+        down.add(entry.getKey());
+      }
+    }
+    return Collections.unmodifiableList(down);
+  }
+
   /**
    * 
    * @return a read only list of members found in the UP state
    */
-  public List<LocalGossipMember> getMemberList() {
+  public List<LocalGossipMember> getLiveMembers() {
     List<LocalGossipMember> up = new ArrayList<>();
     for (Entry<LocalGossipMember, GossipState> entry : members.entrySet()) {
       if (GossipState.UP.equals(entry.getValue())) {
