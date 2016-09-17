@@ -18,7 +18,7 @@
 package org.apache.gossip.manager.impl;
 
 import java.util.List;
-
+import java.util.concurrent.CountDownLatch;
 import org.apache.gossip.GossipMember;
 import org.apache.gossip.LocalGossipMember;
 import org.apache.gossip.RemoteGossipMember;
@@ -31,8 +31,10 @@ public class OnlyProcessReceivedPassiveGossipThread extends PassiveGossipThread 
   
   public static final Logger LOGGER = Logger.getLogger(OnlyProcessReceivedPassiveGossipThread.class);
 
-  public OnlyProcessReceivedPassiveGossipThread(GossipManager gossipManager, GossipCore gossipCore) {
-    super(gossipManager, gossipCore);
+  public OnlyProcessReceivedPassiveGossipThread(GossipManager gossipManager, 
+		                                        GossipCore gossipCore,
+		                                        CountDownLatch gate) {
+    super(gossipManager, gossipCore, gate);
   }
 
   /**

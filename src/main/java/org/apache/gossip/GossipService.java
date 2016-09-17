@@ -20,6 +20,9 @@ package org.apache.gossip;
 import java.net.URI;
 import java.net.UnknownHostException;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ExecutorService;
 
 import org.apache.gossip.event.GossipListener;
 import org.apache.gossip.manager.GossipManager;
@@ -36,6 +39,8 @@ public class GossipService {
   public static final Logger LOGGER = Logger.getLogger(GossipService.class);
 
   private GossipManager gossipManager;
+  
+  protected final ExecutorService thread = Executors.newSingleThreadExecutor();
 
   /**
    * Constructor with the default settings.
@@ -71,11 +76,20 @@ public class GossipService {
 
   public void start() {
     LOGGER.debug("Starting: " + gossipManager.getName() + " - " + get_gossipManager().getMyself().getUri());
-    gossipManager.start();
+    thread.submit(gossipManager);
   }
 
   public void shutdown() {
     gossipManager.shutdown();
+    thread.shutdown();	
+    try {
+        boolean result = thread.awaitTermination(1000, TimeUnit.MILLISECONDS);
+        if (!result) {
+          LOGGER.error("GossipService shutdown timed out!");
+        }
+      } catch (InterruptedException e) {
+        LOGGER.error(e);
+      }
   }
 
   public GossipManager get_gossipManager() {

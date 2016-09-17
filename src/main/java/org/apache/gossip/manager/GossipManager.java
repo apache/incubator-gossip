@@ -17,22 +17,22 @@
  */
 package org.apache.gossip.manager;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-
 import javax.management.Notification;
 import javax.management.NotificationListener;
-
 import org.apache.log4j.Logger;
-
 import org.apache.gossip.GossipMember;
 import org.apache.gossip.GossipService;
 import org.apache.gossip.GossipSettings;
@@ -42,7 +42,7 @@ import org.apache.gossip.event.GossipState;
 import org.apache.gossip.manager.impl.OnlyProcessReceivedPassiveGossipThread;
 import org.apache.gossip.manager.random.RandomActiveGossipThread;
 
-public abstract class GossipManager extends Thread implements NotificationListener {
+public abstract class GossipManager extends Thread implements  NotificationListener {
 
   public static final Logger LOGGER = Logger.getLogger(GossipManager.class);
 
@@ -57,21 +57,22 @@ public abstract class GossipManager extends Thread implements NotificationListen
   private final AtomicBoolean gossipServiceRunning;
 
   private final GossipListener listener;
+  
+  protected final ServiceFactory serviceFactory;
 
-  private ActiveGossipThread activeGossipThread;
-
-  private PassiveGossipThread passiveGossipThread;
+  protected ServiceBundle bundle;
 
   private ExecutorService gossipThreadExecutor;
   
   private GossipCore gossipCore;
 
-  public GossipManager(String cluster,
-          URI uri, String id, GossipSettings settings,
-          List<GossipMember> gossipMembers, GossipListener listener) {
-    
+  public GossipManager(String cluster, URI uri, String id, 
+		               GossipSettings settings, 
+		               List<GossipMember> gossipMembers, 
+		               GossipListener listener) {
     this.settings = settings;
     this.gossipCore = new GossipCore(this);
+    this.serviceFactory = new ServiceFactory(this, gossipCore);
     me = new LocalGossipMember(cluster, uri, id, System.currentTimeMillis(), this,
             settings.getCleanupInterval());
     members = new ConcurrentSkipListMap<>();
@@ -179,24 +180,24 @@ public abstract class GossipManager extends Thread implements NotificationListen
    * Starts the client. Specifically, start the various cycles for this protocol. Start the gossip
    * thread and start the receiver thread.
    */
+  @Override 
   public void run() {
     for (LocalGossipMember member : members.keySet()) {
       if (member != me) {
         member.startTimeoutTimer();
       }
     }
-    passiveGossipThread = new OnlyProcessReceivedPassiveGossipThread(this, gossipCore);
-    gossipThreadExecutor.execute(passiveGossipThread);
-    activeGossipThread = new RandomActiveGossipThread(this, this.gossipCore);
-    gossipThreadExecutor.execute(activeGossipThread);
-    GossipService.LOGGER.debug("The GossipService is started.");
-    while (gossipServiceRunning.get()) {
-      try {
-        // TODO
-        TimeUnit.MILLISECONDS.sleep(1);
-      } catch (InterruptedException e) {
-        GossipService.LOGGER.warn("The GossipClient was interrupted.");
-      }
+    final List<Class<? extends Runnable>> services = new ArrayList<>();
+    services.add(OnlyProcessReceivedPassiveGossipThread.class);
+    services.add(RandomActiveGossipThread.class);
+    this.bundle = serviceFactory.newServices(services);
+    for(Runnable service: this.bundle.services()) {
+      gossipThreadExecutor.submit(service);
+    }
+    try {
+      this.bundle.guard().await();
+    } catch (InterruptedException ie) {
+      Thread.currentThread().interrupt();	
     }
   }
 
@@ -207,11 +208,12 @@ public abstract class GossipManager extends Thread implements NotificationListen
     gossipServiceRunning.set(false);
     gossipThreadExecutor.shutdown();
     gossipCore.shutdown();
-    if (passiveGossipThread != null) {
-      passiveGossipThread.shutdown();
-    }
-    if (activeGossipThread != null) {
-      activeGossipThread.shutdown();
+    if(null != this.bundle) {
+      for(Runnable runnable: this.bundle.services()) {
+    	if(runnable instanceof Shutdownable) {
+    	  ((Shutdownable) runnable).shutdown();
+    	}
+      }
     }
     try {
       boolean result = gossipThreadExecutor.awaitTermination(1000, TimeUnit.MILLISECONDS);
@@ -222,4 +224,60 @@ public abstract class GossipManager extends Thread implements NotificationListen
       LOGGER.error(e);
     }
   }
+}
+class ServiceFactory {
+	
+  final Logger LOGGER = Logger.getLogger(ServiceFactory.class);
+
+  final GossipManager manager;
+  final GossipCore core;
+
+  ServiceFactory(GossipManager manager, GossipCore core) {
+    this.manager = manager;
+    this.core = core;
+  }
+  
+  ServiceBundle newServices(List<Class<? extends Runnable>> classes) {
+	final CountDownLatch gate = new CountDownLatch(classes.size());
+	final List<Runnable> services = new ArrayList<>();
+	try {
+	  for(Class<? extends Runnable> klz: classes) {
+        final Constructor<? extends Runnable> constructor = 
+           klz.getDeclaredConstructor(GossipManager.class, GossipCore.class, 
+        		                      CountDownLatch.class);
+        final Runnable thread = constructor.newInstance(manager, core, gate);
+        services.add(thread);
+	  }
+    } catch (IllegalAccessException iae) {
+      LOGGER.error("Can't access to the definition of classes ...", iae);
+    } catch (InstantiationException ie) {
+      LOGGER.error("Can't instantiate classes ...", ie);
+    } catch (InvocationTargetException ite) {
+      LOGGER.error("Can't invoke target exception ...", ite);
+    } catch (NoSuchMethodException nsme) {
+      LOGGER.error("Method not found ...", nsme);
+    }
+	return new ServiceBundle(services, gate);
+  }
+  
+}
+
+class ServiceBundle {
+	
+  final List<Runnable> runnables;
+  final CountDownLatch gate;
+
+  ServiceBundle(List<Runnable> services, CountDownLatch gate) {
+	this.runnables = services;  
+	this.gate = gate;
+  }
+  
+  List<Runnable> services() {
+	return Collections.unmodifiableList(runnables);
+  }
+  
+  CountDownLatch guard() {
+	return gate;  
+  }
+
 }

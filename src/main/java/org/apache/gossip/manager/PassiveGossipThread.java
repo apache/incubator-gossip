@@ -25,7 +25,7 @@ import java.net.SocketAddress;
 import java.net.SocketException;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
-
+import java.util.concurrent.CountDownLatch;
 import org.apache.gossip.GossipMember;
 import org.apache.gossip.GossipService;
 import org.apache.gossip.model.Base;
@@ -39,7 +39,7 @@ import org.apache.gossip.RemoteGossipMember;
  * membership list, but if you choose to gossip additional information, you will need some logic to
  * determine the incoming message.
  */
-abstract public class PassiveGossipThread implements Runnable {
+abstract public class PassiveGossipThread implements Runnable, Shutdownable {
 
   public static final Logger LOGGER = Logger.getLogger(PassiveGossipThread.class);
 
@@ -53,8 +53,11 @@ abstract public class PassiveGossipThread implements Runnable {
   private final ObjectMapper MAPPER = new ObjectMapper();
   
   private final GossipCore gossipCore;
+  
+  protected final CountDownLatch gate;
 
-  public PassiveGossipThread(GossipManager gossipManager, GossipCore gossipCore) {
+  public PassiveGossipThread(GossipManager gossipManager, GossipCore gossipCore,
+		                     CountDownLatch gate) {
     this.gossipCore = gossipCore;
     try {
       SocketAddress socketAddress = new InetSocketAddress(gossipManager.getMyself().getUri().getHost(),
@@ -71,6 +74,7 @@ abstract public class PassiveGossipThread implements Runnable {
       LOGGER.warn(ex);
       throw new RuntimeException(ex);
     }
+    this.gate = gate;
     keepRunning = new AtomicBoolean(true);
   }
 
@@ -114,9 +118,11 @@ abstract public class PassiveGossipThread implements Runnable {
     }
   }
 
+  @Override 
   public void shutdown() {
     try {
       server.close();
+      gate.countDown();
     } catch (RuntimeException ex) {
     }
   }

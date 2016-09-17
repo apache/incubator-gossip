@@ -21,7 +21,6 @@ import org.apache.gossip.GossipMember;
 import org.apache.gossip.GossipSettings;
 import org.apache.gossip.event.GossipListener;
 import org.apache.gossip.manager.GossipManager;
-import org.apache.gossip.manager.impl.OnlyProcessReceivedPassiveGossipThread;
 
 import java.net.URI;
 import java.util.List;

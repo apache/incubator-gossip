@@ -18,10 +18,11 @@
 package org.apache.gossip.manager;
 
 import java.util.List;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import static java.util.concurrent.TimeUnit.*;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import org.apache.gossip.GossipService;
 import org.apache.gossip.LocalGossipMember;
 
 /**
@@ -29,39 +30,47 @@ import org.apache.gossip.LocalGossipMember;
  * list. This information is important to maintaining a common state among all the nodes, and is
  * important for detecting failures.
  */
-abstract public class ActiveGossipThread implements Runnable {
+abstract public class ActiveGossipThread implements Runnable, Shutdownable {
 
   protected final GossipManager gossipManager;
 
   private final AtomicBoolean keepRunning;
+  
+  protected final int interval;
+  
+  protected final ScheduledExecutorService self; 
+  
+  protected CountDownLatch gate;
 
-  public ActiveGossipThread(GossipManager gossipManager) {
+  public ActiveGossipThread(GossipManager gossipManager, CountDownLatch gate) {
     this.gossipManager = gossipManager;
     this.keepRunning = new AtomicBoolean(true);
+    this.interval = gossipManager.getSettings().getGossipInterval();
+    this.self = Executors.newSingleThreadScheduledExecutor();
+    this.gate = gate;
+  }
+  
+  public void start() {
+    this.self.scheduleAtFixedRate(this, 0, interval, MILLISECONDS);
   }
 
   @Override
   public void run() {
     while (keepRunning.get()) {
-      try {
-        TimeUnit.MILLISECONDS.sleep(gossipManager.getSettings().getGossipInterval());
-        
         // contact a live member.
         sendMembershipList(gossipManager.getMyself(), gossipManager.getLiveMembers());
         
         // contact a dead member.
         sendMembershipList(gossipManager.getMyself(), gossipManager.getDeadMembers());
-        
-      } catch (InterruptedException e) {
-        GossipService.LOGGER.error(e);
-        keepRunning.set(false);
-      }
     }
     shutdown();
   }
 
+  @Override 
   public void shutdown() {
     keepRunning.set(false);
+    this.self.shutdown();
+    this.gate.countDown();
   }
 
   /**
