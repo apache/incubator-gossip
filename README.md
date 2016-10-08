@@ -106,17 +106,3 @@ Users can also attach an event listener:
   });
 ```
 
-
-Maven
-------
-
-
-You can get this software from maven central.
-
-```xml
-  <dependency>
-       <groupId>io.teknek</groupId>
-      <artifactId>gossip</artifactId>
-      <version>${pick_the_latest_version}</version>
-  </dependency>
-```
