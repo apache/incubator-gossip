@@ -29,6 +29,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 import javax.management.Notification;
 import javax.management.NotificationListener;
@@ -149,13 +150,11 @@ public abstract class GossipManager implements NotificationListener {
    * @return a read only list of members found in the DOWN state.
    */
   public List<LocalGossipMember> getDeadMembers() {
-    List<LocalGossipMember> down = new ArrayList<>();
-    for (Entry<LocalGossipMember, GossipState> entry : members.entrySet()) {
-      if (GossipState.DOWN.equals(entry.getValue())) {
-        down.add(entry.getKey());
-      }
-    }
-    return Collections.unmodifiableList(down);
+    return Collections.unmodifiableList(
+            members.entrySet().stream()
+            .filter(entry -> GossipState.DOWN.equals(entry.getValue()))
+            .map(Entry::getKey)
+            .collect(Collectors.toList()));
   }
 
   /**
@@ -163,13 +162,10 @@ public abstract class GossipManager implements NotificationListener {
    * @return a read only list of members found in the UP state
    */
   public List<LocalGossipMember> getLiveMembers() {
-    List<LocalGossipMember> up = new ArrayList<>();
-    for (Entry<LocalGossipMember, GossipState> entry : members.entrySet()) {
-      if (GossipState.UP.equals(entry.getValue())) {
-        up.add(entry.getKey());
-      }
-    }
-    return Collections.unmodifiableList(up);
+    return Collections.unmodifiableList(members.entrySet().stream()
+            .filter(entry -> GossipState.UP.equals(entry.getValue()))
+            .map(Entry::getKey)
+            .collect(Collectors.toList()));
   }
 
   public LocalGossipMember getMyself() {
