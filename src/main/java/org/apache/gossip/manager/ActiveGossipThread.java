@@ -18,7 +18,6 @@
 package org.apache.gossip.manager;
 
 import java.io.IOException;
-import java.net.DatagramSocket;
 import java.util.List;
 
 import java.util.Map.Entry;
@@ -93,8 +92,7 @@ public class ActiveGossipThread {
       LOGGER.debug("Send sendMembershipList() is called without action");
       return;
     }
-    try (DatagramSocket socket = new DatagramSocket()) {
-      socket.setSoTimeout(gossipManager.getSettings().getGossipInterval());
+    try {
       for (Entry<String, SharedGossipDataMessage> innerEntry : this.gossipCore.getSharedData().entrySet()){
           UdpSharedGossipDataMessage message = new UdpSharedGossipDataMessage();
           message.setUuid(UUID.randomUUID().toString());
@@ -102,7 +100,6 @@ public class ActiveGossipThread {
           message.setExpireAt(innerEntry.getValue().getExpireAt());
           message.setKey(innerEntry.getValue().getKey());
           message.setNodeId(innerEntry.getValue().getNodeId());
-          message.setTimestamp(innerEntry.getValue().getTimestamp());
           message.setPayload(innerEntry.getValue().getPayload());
           message.setTimestamp(innerEntry.getValue().getTimestamp());
           byte[] json_bytes = MAPPER.writeValueAsString(message).getBytes();
@@ -125,8 +122,7 @@ public class ActiveGossipThread {
       LOGGER.debug("Send sendMembershipList() is called without action");
       return;
     }
-    try (DatagramSocket socket = new DatagramSocket()) {
-      socket.setSoTimeout(gossipManager.getSettings().getGossipInterval());
+    try {
       for (Entry<String, ConcurrentHashMap<String, GossipDataMessage>> entry : gossipCore.getPerNodeData().entrySet()){
         for (Entry<String, GossipDataMessage> innerEntry : entry.getValue().entrySet()){
           UdpGossipDataMessage message = new UdpGossipDataMessage();
@@ -135,7 +131,6 @@ public class ActiveGossipThread {
           message.setExpireAt(innerEntry.getValue().getExpireAt());
           message.setKey(innerEntry.getValue().getKey());
           message.setNodeId(innerEntry.getValue().getNodeId());
-          message.setTimestamp(innerEntry.getValue().getTimestamp());
           message.setPayload(innerEntry.getValue().getPayload());
           message.setTimestamp(innerEntry.getValue().getTimestamp());
           byte[] json_bytes = MAPPER.writeValueAsString(message).getBytes();
@@ -166,8 +161,7 @@ public class ActiveGossipThread {
       LOGGER.debug("Send sendMembershipList() is called to " + member.toString());
     }
     
-    try (DatagramSocket socket = new DatagramSocket()) {
-      socket.setSoTimeout(gossipManager.getSettings().getGossipInterval());
+    try {
       UdpActiveGossipMessage message = new UdpActiveGossipMessage();
       message.setUriFrom(gossipManager.getMyself().getUri().toASCIIString());
       message.setUuid(UUID.randomUUID().toString());
