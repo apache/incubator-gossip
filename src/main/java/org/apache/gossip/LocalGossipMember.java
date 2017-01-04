@@ -66,5 +66,6 @@ public class LocalGossipMember extends GossipMember {
 
   public void disableTimer() {
     timeoutTimer.removeAllNotifications();
+    timeoutTimer.stop();
   }
 }
