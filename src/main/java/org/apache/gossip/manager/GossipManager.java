@@ -17,6 +17,7 @@
  */
 package org.apache.gossip.manager;
 
+import com.codahale.metrics.MetricRegistry;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -74,9 +75,11 @@ public abstract class GossipManager {
   
   private final ScheduledExecutorService scheduledServiced;
 
+  private MetricRegistry registry;
+
   public GossipManager(String cluster,
           URI uri, String id, GossipSettings settings,
-          List<GossipMember> gossipMembers, GossipListener listener) {
+          List<GossipMember> gossipMembers, GossipListener listener, MetricRegistry registry) {
     
     this.settings = settings;
     gossipCore = new GossipCore(this);
@@ -98,6 +101,7 @@ public abstract class GossipManager {
     gossipServiceRunning = new AtomicBoolean(true);
     this.listener = listener;
     this.scheduledServiced = Executors.newScheduledThreadPool(1);
+    this.registry = registry;
   }
 
   public ConcurrentSkipListMap<LocalGossipMember, GossipState> getMembers() {
@@ -148,7 +152,7 @@ public abstract class GossipManager {
   public void init() {
     passiveGossipThread = new OnlyProcessReceivedPassiveGossipThread(this, gossipCore);
     gossipThreadExecutor.execute(passiveGossipThread);
-    activeGossipThread = new ActiveGossipThread(this, this.gossipCore);
+    activeGossipThread = new ActiveGossipThread(this, this.gossipCore, registry);
     activeGossipThread.init();
     dataReaper.init();
     scheduledServiced.scheduleAtFixedRate(() -> {

@@ -17,6 +17,7 @@
  */
 package org.apache.gossip.examples;
 
+import com.codahale.metrics.MetricRegistry;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -81,7 +82,7 @@ public class GossipExample extends Thread {
       // dead list handling.
       for (GossipMember member : startupMembers) {
         GossipService gossipService = new GossipService(cluster,  member.getUri(), "",
-                startupMembers, settings, null);
+                startupMembers, settings, null, new MetricRegistry());
         clients.add(gossipService);
         gossipService.start();
         sleep(settings.getCleanupInterval() + 1000);

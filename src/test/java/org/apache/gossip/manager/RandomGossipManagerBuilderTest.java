@@ -17,6 +17,7 @@
  */
 package org.apache.gossip.manager;
 
+import com.codahale.metrics.MetricRegistry;
 import org.apache.gossip.GossipMember;
 import org.apache.gossip.GossipSettings;
 import org.apache.gossip.LocalGossipMember;
@@ -82,7 +83,7 @@ public class RandomGossipManagerBuilderTest {
         .cluster("aCluster")
         .uri(new URI("udp://localhost:2000"))
         .settings(new GossipSettings())
-        .gossipMembers(null).build();
+        .gossipMembers(null).registry(new MetricRegistry()).build();
     assertNotNull(gossipManager.getLiveMembers());
   }
 
@@ -98,7 +99,7 @@ public class RandomGossipManagerBuilderTest {
         .cluster("aCluster")
         .settings(new GossipSettings())
         .uri(new URI("udp://localhost:8000"))
-        .gossipMembers(memberList).build();
+        .gossipMembers(memberList).registry(new MetricRegistry()).build();
     assertEquals(1, gossipManager.getDeadMembers().size());
     assertEquals(member.getId(), gossipManager.getDeadMembers().get(0).getId());
   }

@@ -17,6 +17,7 @@
  */
 package org.apache.gossip.manager.random;
 
+import com.codahale.metrics.MetricRegistry;
 import org.apache.gossip.GossipMember;
 import org.apache.gossip.GossipSettings;
 import org.apache.gossip.event.GossipListener;
@@ -40,6 +41,7 @@ public class RandomGossipManager extends GossipManager {
     private GossipSettings settings;
     private List<GossipMember> gossipMembers;
     private GossipListener listener;
+    private MetricRegistry registry;
 
     private ManagerBuilder() {}
 
@@ -73,6 +75,10 @@ public class RandomGossipManager extends GossipManager {
       this.listener = listener;
       return this;
     }
+    public ManagerBuilder registry(MetricRegistry registry) {
+      this.registry = registry;
+      return this;
+    }
 
     public ManagerBuilder uri(URI uri){
       this.uri = uri;
@@ -84,15 +90,16 @@ public class RandomGossipManager extends GossipManager {
       checkArgument(cluster != null, "You must specify a cluster name");
       checkArgument(settings != null, "You must specify gossip settings");
       checkArgument(uri != null, "You must specify a uri");
+      checkArgument(registry != null, "Metric registry is null");
       if (gossipMembers == null) {
         gossipMembers = new ArrayList<>();
       }
-      return new RandomGossipManager(cluster, uri, id, settings, gossipMembers, listener);
+      return new RandomGossipManager(cluster, uri, id, settings, gossipMembers, listener, registry);
     }
   }
 
   private RandomGossipManager(String cluster, URI uri, String id, GossipSettings settings, 
-          List<GossipMember> gossipMembers, GossipListener listener) {
-    super(cluster, uri, id, settings, gossipMembers, listener);
+          List<GossipMember> gossipMembers, GossipListener listener, MetricRegistry registry) {
+    super(cluster, uri, id, settings, gossipMembers, listener, registry);
   }
 }

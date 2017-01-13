@@ -17,6 +17,8 @@
  */
 package org.apache.gossip.manager;
 
+import com.codahale.metrics.JmxReporter;
+import com.codahale.metrics.MetricRegistry;
 import java.net.URI;
 
 import org.apache.gossip.GossipSettings;
@@ -30,14 +32,19 @@ import io.teknek.tunit.TUnit;
 
 public class DataReaperTest {
 
+  private static final MetricRegistry registry = new MetricRegistry();
+
+  private static final JmxReporter reporter = JmxReporter.forRegistry(registry).build();
+
   @Test
   public void testReaperOneShot() {
+    reporter.start();
     String myId = "4";
     String key = "key";
     String value = "a";
     GossipSettings settings = new GossipSettings();
     GossipManager gm = RandomGossipManager.newBuilder().cluster("abc").settings(settings)
-            .withId(myId).uri(URI.create("udp://localhost:6000")).build();
+            .withId(myId).uri(URI.create("udp://localhost:6000")).registry(registry).build();
     gm.init();
     gm.gossipPerNodeData(perNodeDatum(key, value));
     gm.gossipSharedData(sharedDatum(key, value));
@@ -71,12 +78,14 @@ public class DataReaperTest {
 
   @Test
   public void testHigherTimestampWins() {
+    reporter.start();
+
     String myId = "4";
     String key = "key";
     String value = "a";
     GossipSettings settings = new GossipSettings();
     GossipManager gm = RandomGossipManager.newBuilder().cluster("abc").settings(settings)
-            .withId(myId).uri(URI.create("udp://localhost:7000")).build();
+            .withId(myId).uri(URI.create("udp://localhost:7000")).registry(registry).build();
     gm.init();
     GossipDataMessage before = perNodeDatum(key, value);
     GossipDataMessage after = perNodeDatum(key, "b");

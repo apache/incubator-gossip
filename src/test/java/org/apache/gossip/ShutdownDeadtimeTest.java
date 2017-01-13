@@ -17,6 +17,7 @@
  */
 package org.apache.gossip;
 
+import com.codahale.metrics.MetricRegistry;
 import io.teknek.tunit.TUnit;
 
 import java.net.URI;
@@ -58,7 +59,7 @@ public class ShutdownDeadtimeTest {
     for (int i = 1; i < clusterMembers + 1; ++i) {
       URI uri = new URI("udp://" + "127.0.0.1" + ":" + (30300 + i));
       GossipService gossipService = new GossipService(cluster, uri, i + "", startupMembers,
-              settings, (a,b) -> {});
+              settings, (a,b) -> {}, new MetricRegistry());
       clients.add(gossipService);
       gossipService.start();
     }
@@ -104,7 +105,7 @@ public class ShutdownDeadtimeTest {
     URI uri = new URI("udp://" + "127.0.0.1" + ":" + shutdownPort);
     // start client again
     GossipService gossipService = new GossipService(cluster, uri, shutdownId + "", startupMembers,
-            settings, (a,b) -> {});
+            settings, (a,b) -> {}, new MetricRegistry());
     clients.add(gossipService);
     gossipService.start();
 
