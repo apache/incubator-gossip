@@ -71,6 +71,7 @@ public class GossipService {
         .settings(settings)
         .gossipMembers(gossipMembers)
         .listener(listener)
+        .registry(registry)
         .build();
   }
 
