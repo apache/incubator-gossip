@@ -17,6 +17,7 @@
  */
 package org.apache.gossip; 
 
+import com.codahale.metrics.MetricRegistry;
 import io.teknek.tunit.TUnit;
 
 import java.net.URI;
@@ -58,7 +59,7 @@ public class TenNodeThreeSeedTest {
     for (int i = 1; i < clusterMembers+1; ++i) {
       URI uri = new URI("udp://" + "127.0.0.1" + ":" + (base + i));
       GossipService gossipService = new GossipService(cluster, uri, i + "",
-              startupMembers, settings, (a,b) -> {});
+              startupMembers, settings, (a,b) -> {}, new MetricRegistry());
       clients.add(gossipService);
       gossipService.start();
     }    

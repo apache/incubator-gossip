@@ -35,7 +35,6 @@ import java.util.concurrent.TimeUnit;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.MetricRegistry;
 import org.apache.gossip.LocalGossipMember;
-import org.apache.gossip.metrics.GossipMetricsRegistry;
 import org.apache.gossip.model.ActiveGossipOk;
 import org.apache.gossip.model.GossipDataMessage;
 import org.apache.gossip.model.GossipMember;
@@ -68,12 +67,13 @@ public class ActiveGossipThread {
   private ThreadPoolExecutor threadService;
   private ObjectMapper MAPPER = new ObjectMapper();
 
-  private static MetricRegistry registry = GossipMetricsRegistry.getRegistry();
+  private MetricRegistry registry;
   private Histogram sharedDataHistogram;
   private Histogram sendPerNodeDataHistogram;
   private Histogram sendMembershipHistorgram;
 
-  public ActiveGossipThread(GossipManager gossipManager, GossipCore gossipCore) {
+  public ActiveGossipThread(GossipManager gossipManager, GossipCore gossipCore, MetricRegistry registry) {
+    this.registry = registry;
     this.gossipManager = gossipManager;
     random = new Random();
     this.gossipCore = gossipCore;
