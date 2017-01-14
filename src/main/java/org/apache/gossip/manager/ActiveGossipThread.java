@@ -32,6 +32,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import com.codahale.metrics.Histogram;
+import com.codahale.metrics.MetricRegistry;
 import org.apache.gossip.LocalGossipMember;
 import org.apache.gossip.model.ActiveGossipOk;
 import org.apache.gossip.model.GossipDataMessage;
@@ -44,6 +46,8 @@ import org.apache.gossip.udp.UdpSharedGossipDataMessage;
 import org.apache.log4j.Logger;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import static com.codahale.metrics.MetricRegistry.name;
 
 
 /**
@@ -63,15 +67,28 @@ public class ActiveGossipThread {
   private ThreadPoolExecutor threadService;
   private ObjectMapper MAPPER = new ObjectMapper();
 
-  public ActiveGossipThread(GossipManager gossipManager, GossipCore gossipCore) {
+  private MetricRegistry registry;
+  private Histogram sharedDataHistogram;
+  private Histogram sendPerNodeDataHistogram;
+  private Histogram sendMembershipHistorgram;
+
+  public ActiveGossipThread(GossipManager gossipManager, GossipCore gossipCore, MetricRegistry registry) {
+    this.registry = registry;
     this.gossipManager = gossipManager;
     random = new Random();
     this.gossipCore = gossipCore;
     this.scheduledExecutorService = Executors.newScheduledThreadPool(2);
     workQueue = new ArrayBlockingQueue<Runnable>(1024);
     threadService = new ThreadPoolExecutor(1, 30, 1, TimeUnit.SECONDS, workQueue, new ThreadPoolExecutor.DiscardOldestPolicy());
+    initiateMetrics();
   }
- 
+
+  public void initiateMetrics() {
+    this.sharedDataHistogram = registry.histogram(name(ActiveGossipThread.class, "sharedDataHistogram-time"));
+    this.sendPerNodeDataHistogram = registry.histogram(name(ActiveGossipThread.class, "sendPerNodeDataHistogram-time"));
+    this.sendMembershipHistorgram = registry.histogram(name(ActiveGossipThread.class, "sendMembershipHistorgram-time"));
+  }
+
   public void init() {
     scheduledExecutorService.scheduleAtFixedRate(
             () -> { 
@@ -99,9 +116,12 @@ public class ActiveGossipThread {
   }
 
   public void sendSharedData(LocalGossipMember me, List<LocalGossipMember> memberList){
+    long startTime = System.currentTimeMillis();
+
     LocalGossipMember member = selectPartner(memberList);
     if (member == null) {
       LOGGER.debug("Send sendMembershipList() is called without action");
+      sharedDataHistogram.update(System.currentTimeMillis() - startTime);
       return;
     }
     try (DatagramSocket socket = new DatagramSocket()) {
@@ -126,14 +146,19 @@ public class ActiveGossipThread {
           }
       }
     } catch (IOException e1) {
+      sharedDataHistogram.update(System.currentTimeMillis() - startTime);
       LOGGER.warn(e1);
     }
+    sharedDataHistogram.update(System.currentTimeMillis() - startTime);
   }
   
   public void sendPerNodeData(LocalGossipMember me, List<LocalGossipMember> memberList){
+    long startTime = System.currentTimeMillis();
+
     LocalGossipMember member = selectPartner(memberList);
     if (member == null) {
       LOGGER.debug("Send sendMembershipList() is called without action");
+      sendPerNodeDataHistogram.update(System.currentTimeMillis() - startTime);
       return;
     }
     try (DatagramSocket socket = new DatagramSocket()) {
@@ -160,8 +185,10 @@ public class ActiveGossipThread {
         }
       }
     } catch (IOException e1) {
+      sendPerNodeDataHistogram.update(System.currentTimeMillis() - startTime);
       LOGGER.warn(e1);
     }
+    sendPerNodeDataHistogram.update(System.currentTimeMillis() - startTime);
   }
   
   protected void sendToALiveMember(){
@@ -176,10 +203,13 @@ public class ActiveGossipThread {
   /**
    * Performs the sending of the membership list, after we have incremented our own heartbeat.
    */
-  protected void sendMembershipList(LocalGossipMember me, LocalGossipMember member) {  
+  protected void sendMembershipList(LocalGossipMember me, LocalGossipMember member) {
+    long startTime = System.currentTimeMillis();
+
     me.setHeartbeat(System.nanoTime());
     if (member == null) {
       LOGGER.debug("Send sendMembershipList() is called without action");
+      sendMembershipHistorgram.update(System.currentTimeMillis() - startTime);
       return;
     } else {
       LOGGER.debug("Send sendMembershipList() is called to " + member.toString());
@@ -207,8 +237,10 @@ public class ActiveGossipThread {
                 + packet_length + " > " + GossipManager.MAX_PACKET_SIZE + ").");
       }
     } catch (IOException e1) {
+      sendMembershipHistorgram.update(System.currentTimeMillis() - startTime);
       LOGGER.warn(e1);
     }
+    sendMembershipHistorgram.update(System.currentTimeMillis() - startTime);
   }
   
   /**

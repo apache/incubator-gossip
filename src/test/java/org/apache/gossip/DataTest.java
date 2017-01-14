@@ -17,6 +17,7 @@
  */
 package org.apache.gossip;
 
+import com.codahale.metrics.MetricRegistry;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
@@ -56,7 +57,7 @@ public class DataTest {
         public void gossipEvent(GossipMember member, GossipState state) {
           
         }
-      });
+      }, new MetricRegistry());
       clients.add(gossipService);
       gossipService.start();
     }

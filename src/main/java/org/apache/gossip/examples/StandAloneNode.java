@@ -17,6 +17,7 @@
  */
 package org.apache.gossip.examples;
 
+import com.codahale.metrics.MetricRegistry;
 import java.net.URI;
 import java.net.UnknownHostException;
 import java.util.Arrays;
@@ -32,7 +33,7 @@ public class StandAloneNode {
     s.setConvictThreshold(1.0);
     s.setGossipInterval(10);
     GossipService gossipService = new GossipService("mycluster",  URI.create(args[0]), args[1],
-            Arrays.asList( new RemoteGossipMember("mycluster", URI.create(args[2]), args[3])), s, (a,b) -> {} );
+            Arrays.asList( new RemoteGossipMember("mycluster", URI.create(args[2]), args[3])), s, (a,b) -> {}, new MetricRegistry());
     gossipService.start();
     while (true){
       System.out.println( "Live: " + gossipService.getGossipManager().getLiveMembers());
