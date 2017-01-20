@@ -32,27 +32,37 @@ import io.teknek.tunit.TUnit;
 public class DataReaperTest {
 
   private final MetricRegistry registry = new MetricRegistry();
-
+  String myId = "4";
+  String key = "key";
+  String value = "a";
+  
   @Test
   public void testReaperOneShot() {
-    String myId = "4";
-    String key = "key";
-    String value = "a";
     GossipSettings settings = new GossipSettings();
     GossipManager gm = RandomGossipManager.newBuilder().cluster("abc").settings(settings)
             .withId(myId).uri(URI.create("udp://localhost:6000")).registry(registry).build();
     gm.init();
     gm.gossipPerNodeData(perNodeDatum(key, value));
     gm.gossipSharedData(sharedDatum(key, value));
-    Assert.assertEquals(value, gm.findPerNodeGossipData(myId, key).getPayload());
-    Assert.assertEquals(value, gm.findSharedGossipData(key).getPayload());
+    assertDataIsAtCorrectValue(gm);
     gm.getDataReaper().runPerNodeOnce();
     gm.getDataReaper().runSharedOnce();
-    TUnit.assertThat(() -> gm.findPerNodeGossipData(myId, key)).equals(null);
-    TUnit.assertThat(() -> gm.findSharedGossipData(key)).equals(null);
+    assertDataIsRemoved(gm);
     gm.shutdown();
   }
 
+  private void assertDataIsAtCorrectValue(GossipManager gm){
+    Assert.assertEquals(value, gm.findPerNodeGossipData(myId, key).getPayload());
+    Assert.assertEquals(1, registry.getGauges().get(GossipCoreConstants.PER_NODE_DATA_SIZE).getValue());
+    Assert.assertEquals(value, gm.findSharedGossipData(key).getPayload());
+    Assert.assertEquals(1, registry.getGauges().get(GossipCoreConstants.SHARED_DATA_SIZE).getValue());
+  }
+  
+  private void assertDataIsRemoved(GossipManager gm){
+    TUnit.assertThat(() -> gm.findPerNodeGossipData(myId, key)).equals(null);
+    TUnit.assertThat(() -> gm.findSharedGossipData(key)).equals(null);
+  }
+  
   private GossipDataMessage perNodeDatum(String key, String value) {
     GossipDataMessage m = new GossipDataMessage();
     m.setExpireAt(System.currentTimeMillis() + 5L);

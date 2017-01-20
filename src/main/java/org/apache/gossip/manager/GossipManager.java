@@ -49,8 +49,6 @@ public abstract class GossipManager {
 
   public static final Logger LOGGER = Logger.getLogger(GossipManager.class);
 
-  public static final int MAX_PACKET_SIZE = 102400;
-
   private final ConcurrentSkipListMap<LocalGossipMember, GossipState> members;
 
   private final LocalGossipMember me;
@@ -82,7 +80,7 @@ public abstract class GossipManager {
           List<GossipMember> gossipMembers, GossipListener listener, MetricRegistry registry) {
     
     this.settings = settings;
-    gossipCore = new GossipCore(this);
+    gossipCore = new GossipCore(this, registry);
     clock = new SystemClock();
     dataReaper = new DataReaper(gossipCore, clock);
     me = new LocalGossipMember(cluster, uri, id, clock.nanoTime(),
@@ -256,4 +254,5 @@ public abstract class GossipManager {
     return dataReaper;
   }
             
+  
 }

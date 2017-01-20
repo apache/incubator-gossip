@@ -31,7 +31,6 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -53,27 +52,42 @@ import org.apache.gossip.udp.UdpNotAMemberFault;
 import org.apache.gossip.udp.UdpSharedGossipDataMessage;
 import org.apache.log4j.Logger;
 
+import com.codahale.metrics.Gauge;
+import com.codahale.metrics.Meter;
+import com.codahale.metrics.MetricRegistry;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 
-public class GossipCore {
+public class GossipCore implements GossipCoreConstants {
   
   public static final Logger LOGGER = Logger.getLogger(GossipCore.class);
   private static final ObjectMapper MAPPER = new ObjectMapper();
   private final GossipManager gossipManager;
   private ConcurrentHashMap<String, Base> requests;
-  private ExecutorService service;
+  private ThreadPoolExecutor service;
   private final ConcurrentHashMap<String, ConcurrentHashMap<String, GossipDataMessage>> perNodeData;
   private final ConcurrentHashMap<String, SharedGossipDataMessage> sharedData;
   private final BlockingQueue<Runnable> workQueue;
+  private final Meter messageSerdeException;
+  private final Meter tranmissionException;
+  private final Meter tranmissionSuccess;
   
-  public GossipCore(GossipManager manager){
+  public GossipCore(GossipManager manager, MetricRegistry metrics){
     this.gossipManager = manager;
     requests = new ConcurrentHashMap<>();
     workQueue = new ArrayBlockingQueue<>(1024);
     service = new ThreadPoolExecutor(1, 5, 1, TimeUnit.SECONDS, workQueue, new ThreadPoolExecutor.DiscardOldestPolicy());
     perNodeData = new ConcurrentHashMap<>();
     sharedData = new ConcurrentHashMap<>();
+    metrics.register(WORKQUEUE_SIZE, (Gauge<Integer>)() -> workQueue.size());
+    metrics.register(PER_NODE_DATA_SIZE, (Gauge<Integer>)() -> perNodeData.size());
+    metrics.register(SHARED_DATA_SIZE, (Gauge<Integer>)() ->  sharedData.size());
+    metrics.register(REQUEST_SIZE, (Gauge<Integer>)() ->  requests.size());
+    metrics.register(THREADPOOL_ACTIVE, (Gauge<Integer>)() ->  service.getActiveCount());
+    metrics.register(THREADPOOL_SIZE, (Gauge<Integer>)() ->  service.getPoolSize());
+    messageSerdeException = metrics.meter(MESSAGE_SERDE_EXCEPTION);
+    tranmissionException = metrics.meter(MESSAGE_TRANSMISSION_EXCEPTION);
+    tranmissionSuccess = metrics.meter(MESSAGE_TRANSMISSION_SUCCESS);
   }
   
   public void addSharedData(SharedGossipDataMessage message){
@@ -175,29 +189,29 @@ public class GossipCore {
   }
   
   /**
-   * Sends a blocking  message. Throws exception when tranmission fails 
+   * Sends a blocking message.  
    * @param message
    * @param uri
+   * @throws RuntimeException if data can not be serialized or in transmission error
    */
   private void sendInternal(Base message, URI uri){
     byte[] json_bytes;
     try {
       json_bytes = MAPPER.writeValueAsString(message).getBytes();
     } catch (IOException e) {
+      messageSerdeException.mark();
       throw new RuntimeException(e);
     }
-    int packet_length = json_bytes.length;
-    if (packet_length < GossipManager.MAX_PACKET_SIZE) {
-      byte[] buf = UdpUtil.createBuffer(packet_length, json_bytes);
-      try (DatagramSocket socket = new DatagramSocket()) {
-        socket.setSoTimeout(gossipManager.getSettings().getGossipInterval() * 2);
-        InetAddress dest = InetAddress.getByName(uri.getHost());
-        DatagramPacket datagramPacket = new DatagramPacket(buf, buf.length, dest, uri.getPort());
-        socket.send(datagramPacket);
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      } 
-    }
+    try (DatagramSocket socket = new DatagramSocket()) {
+      socket.setSoTimeout(gossipManager.getSettings().getGossipInterval() * 2);
+      InetAddress dest = InetAddress.getByName(uri.getHost());
+      DatagramPacket datagramPacket = new DatagramPacket(json_bytes, json_bytes.length, dest, uri.getPort());
+      socket.send(datagramPacket);
+      tranmissionSuccess.mark();
+    } catch (IOException e) {
+      tranmissionException.mark();
+      throw new RuntimeException(e);
+    } 
   }
   
   public Response send(Base message, URI uri){
@@ -225,7 +239,7 @@ public class GossipCore {
             return (Response) b;
           }
           try {
-            Thread.sleep(0, 1000);
+            Thread.sleep(0, 555555);
           } catch (InterruptedException e) {
             
           }
@@ -261,19 +275,20 @@ public class GossipCore {
   public void sendOneWay(Base message, URI u){
     byte[] json_bytes;
     try {
-      json_bytes = MAPPER.writeValueAsString(message).getBytes();
+      json_bytes = MAPPER.writeValueAsBytes(message);
     } catch (IOException e) {
+      messageSerdeException.mark();
       throw new RuntimeException(e);
     }
-    int packet_length = json_bytes.length;
-    if (packet_length < GossipManager.MAX_PACKET_SIZE) {
-      byte[] buf = UdpUtil.createBuffer(packet_length, json_bytes);
-      try (DatagramSocket socket = new DatagramSocket()) {
-        socket.setSoTimeout(gossipManager.getSettings().getGossipInterval() * 2);
-        InetAddress dest = InetAddress.getByName(u.getHost());
-        DatagramPacket datagramPacket = new DatagramPacket(buf, buf.length, dest, u.getPort());
-        socket.send(datagramPacket);
-      } catch (IOException ex) { }
+    try (DatagramSocket socket = new DatagramSocket()) {
+      socket.setSoTimeout(gossipManager.getSettings().getGossipInterval() * 2);
+      InetAddress dest = InetAddress.getByName(u.getHost());
+      DatagramPacket datagramPacket = new DatagramPacket(json_bytes, json_bytes.length, dest, u.getPort());
+      socket.send(datagramPacket);
+      tranmissionSuccess.mark();
+    } catch (IOException ex) { 
+      tranmissionException.mark();
+      LOGGER.debug("Send one way failed", ex);
     }
   }
 

@@ -17,7 +17,6 @@
  */
 package org.apache.gossip.manager;
 
-import java.io.IOException;
 import java.util.List;
 
 import java.util.Map.Entry;
@@ -44,8 +43,6 @@ import org.apache.gossip.udp.UdpGossipDataMessage;
 import org.apache.gossip.udp.UdpSharedGossipDataMessage;
 import org.apache.log4j.Logger;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import static com.codahale.metrics.MetricRegistry.name;
 
 /**
@@ -61,7 +58,6 @@ public class ActiveGossipThread {
   private ScheduledExecutorService scheduledExecutorService;
   private final BlockingQueue<Runnable> workQueue;
   private ThreadPoolExecutor threadService;
-  private ObjectMapper MAPPER = new ObjectMapper();
 
   private final Histogram sharedDataHistogram;
   private final Histogram sendPerNodeDataHistogram;
@@ -114,28 +110,17 @@ public class ActiveGossipThread {
       LOGGER.debug("Send sendMembershipList() is called without action");
       sharedDataHistogram.update(System.currentTimeMillis() - startTime);
       return;
-    }
-    try {
-      for (Entry<String, SharedGossipDataMessage> innerEntry : this.gossipCore.getSharedData().entrySet()){
-          UdpSharedGossipDataMessage message = new UdpSharedGossipDataMessage();
-          message.setUuid(UUID.randomUUID().toString());
-          message.setUriFrom(me.getId());
-          message.setExpireAt(innerEntry.getValue().getExpireAt());
-          message.setKey(innerEntry.getValue().getKey());
-          message.setNodeId(innerEntry.getValue().getNodeId());
-          message.setTimestamp(innerEntry.getValue().getTimestamp());
-          message.setPayload(innerEntry.getValue().getPayload());
-          byte[] json_bytes = MAPPER.writeValueAsString(message).getBytes();
-          int packet_length = json_bytes.length;
-          if (packet_length < GossipManager.MAX_PACKET_SIZE) {
-            gossipCore.sendOneWay(message, member.getUri());
-          } else {
-            LOGGER.error("The length of the to be send message is too large ("
-                    + packet_length + " > " + GossipManager.MAX_PACKET_SIZE + ").");
-          }
-      }
-    } catch (IOException e1) {
-      LOGGER.warn(e1);
+    }    
+    for (Entry<String, SharedGossipDataMessage> innerEntry : gossipCore.getSharedData().entrySet()){
+        UdpSharedGossipDataMessage message = new UdpSharedGossipDataMessage();
+        message.setUuid(UUID.randomUUID().toString());
+        message.setUriFrom(me.getId());
+        message.setExpireAt(innerEntry.getValue().getExpireAt());
+        message.setKey(innerEntry.getValue().getKey());
+        message.setNodeId(innerEntry.getValue().getNodeId());
+        message.setTimestamp(innerEntry.getValue().getTimestamp());
+        message.setPayload(innerEntry.getValue().getPayload());
+        gossipCore.sendOneWay(message, member.getUri());
     }
     sharedDataHistogram.update(System.currentTimeMillis() - startTime);
   }
@@ -148,36 +133,26 @@ public class ActiveGossipThread {
       LOGGER.debug("Send sendMembershipList() is called without action");
       sendPerNodeDataHistogram.update(System.currentTimeMillis() - startTime);
       return;
-    }
-    try {
-      for (Entry<String, ConcurrentHashMap<String, GossipDataMessage>> entry : gossipCore.getPerNodeData().entrySet()){
-        for (Entry<String, GossipDataMessage> innerEntry : entry.getValue().entrySet()){
-          UdpGossipDataMessage message = new UdpGossipDataMessage();
-          message.setUuid(UUID.randomUUID().toString());
-          message.setUriFrom(me.getId());
-          message.setExpireAt(innerEntry.getValue().getExpireAt());
-          message.setKey(innerEntry.getValue().getKey());
-          message.setNodeId(innerEntry.getValue().getNodeId());
-          message.setTimestamp(innerEntry.getValue().getTimestamp());
-          message.setPayload(innerEntry.getValue().getPayload());
-          byte[] json_bytes = MAPPER.writeValueAsString(message).getBytes();
-          int packet_length = json_bytes.length;
-          if (packet_length < GossipManager.MAX_PACKET_SIZE) {
-            gossipCore.sendOneWay(message, member.getUri());
-          } else {
-            LOGGER.error("The length of the to be send message is too large ("
-                    + packet_length + " > " + GossipManager.MAX_PACKET_SIZE + ").");
-          }
-        }
+    }    
+    for (Entry<String, ConcurrentHashMap<String, GossipDataMessage>> entry : gossipCore.getPerNodeData().entrySet()){
+      for (Entry<String, GossipDataMessage> innerEntry : entry.getValue().entrySet()){
+        UdpGossipDataMessage message = new UdpGossipDataMessage();
+        message.setUuid(UUID.randomUUID().toString());
+        message.setUriFrom(me.getId());
+        message.setExpireAt(innerEntry.getValue().getExpireAt());
+        message.setKey(innerEntry.getValue().getKey());
+        message.setNodeId(innerEntry.getValue().getNodeId());
+        message.setTimestamp(innerEntry.getValue().getTimestamp());
+        message.setPayload(innerEntry.getValue().getPayload());
+        gossipCore.sendOneWay(message, member.getUri());   
       }
-    } catch (IOException e1) {
-      LOGGER.warn(e1);
     }
     sendPerNodeDataHistogram.update(System.currentTimeMillis() - startTime);
   }
   
   protected void sendToALiveMember(){
     LocalGossipMember member = selectPartner(gossipManager.getLiveMembers());
+    System.out.println("send" );
     sendMembershipList(gossipManager.getMyself(), member);
   }
   
@@ -199,29 +174,18 @@ public class ActiveGossipThread {
     } else {
       LOGGER.debug("Send sendMembershipList() is called to " + member.toString());
     }
-    try {
-      UdpActiveGossipMessage message = new UdpActiveGossipMessage();
-      message.setUriFrom(gossipManager.getMyself().getUri().toASCIIString());
-      message.setUuid(UUID.randomUUID().toString());
-      message.getMembers().add(convert(me));
-      for (LocalGossipMember other : gossipManager.getMembers().keySet()) {
-        message.getMembers().add(convert(other));
-      }
-      byte[] json_bytes = MAPPER.writeValueAsString(message).getBytes();
-      int packet_length = json_bytes.length;
-      if (packet_length < GossipManager.MAX_PACKET_SIZE) {
-        Response r = gossipCore.send(message, member.getUri());
-        if (r instanceof ActiveGossipOk){
-          //maybe count metrics here
-        } else {
-          LOGGER.debug("Message " + message + " generated response " + r);
-        }
-      } else {
-        LOGGER.error("The length of the to be send message is too large ("
-                + packet_length + " > " + GossipManager.MAX_PACKET_SIZE + ").");
-      }
-    } catch (IOException e1) {
-      LOGGER.warn(e1);
+    UdpActiveGossipMessage message = new UdpActiveGossipMessage();
+    message.setUriFrom(gossipManager.getMyself().getUri().toASCIIString());
+    message.setUuid(UUID.randomUUID().toString());
+    message.getMembers().add(convert(me));
+    for (LocalGossipMember other : gossipManager.getMembers().keySet()) {
+      message.getMembers().add(convert(other));
+    }
+    Response r = gossipCore.send(message, member.getUri());
+    if (r instanceof ActiveGossipOk){
+      //maybe count metrics here
+    } else {
+      LOGGER.debug("Message " + message + " generated response " + r);
     }
     sendMembershipHistorgram.update(System.currentTimeMillis() - startTime);
   }

@@ -78,23 +78,13 @@ abstract public class PassiveGossipThread implements Runnable {
         byte[] buf = new byte[server.getReceiveBufferSize()];
         DatagramPacket p = new DatagramPacket(buf, buf.length);
         server.receive(p);
-        int packet_length = UdpUtil.readPacketLengthFromBuffer(buf);
-        if (packet_length <= GossipManager.MAX_PACKET_SIZE) {
-          byte[] json_bytes = new byte[packet_length];
-          for (int i = 0; i < packet_length; i++) {
-            json_bytes[i] = buf[i + 4];
-          }
-          debug(packet_length, json_bytes);
-          try {
-            Base activeGossipMessage = MAPPER.readValue(json_bytes, Base.class);
-            gossipCore.receive(activeGossipMessage);
-          } catch (RuntimeException ex) {//TODO trap json exception
-            LOGGER.error("Unable to process message", ex);
-          }
-        } else {
-          LOGGER.error("The received message is not of the expected size, it has been dropped.");
+        debug(p.getData());
+        try {
+          Base activeGossipMessage = MAPPER.readValue(p.getData(), Base.class);
+          gossipCore.receive(activeGossipMessage);
+        } catch (RuntimeException ex) {//TODO trap json exception
+          LOGGER.error("Unable to process message", ex);
         }
-
       } catch (IOException e) {
         LOGGER.error(e);
         keepRunning.set(false);
@@ -103,11 +93,10 @@ abstract public class PassiveGossipThread implements Runnable {
     shutdown();
   }
 
-  private void debug(int packetLength, byte[] jsonBytes) {
+  private void debug(byte[] jsonBytes) {
     if (LOGGER.isDebugEnabled()){
       String receivedMessage = new String(jsonBytes);
-      LOGGER.debug("Received message (" + packetLength + " bytes): "
-            + receivedMessage);
+      LOGGER.debug("Received message ( bytes): " + receivedMessage);
     }
   }
 

@@ -31,7 +31,7 @@ public class StandAloneNode {
     GossipSettings s = new GossipSettings();
     s.setWindowSize(10);
     s.setConvictThreshold(1.0);
-    s.setGossipInterval(10);
+    s.setGossipInterval(1000);
     GossipService gossipService = new GossipService("mycluster",  URI.create(args[0]), args[1],
             Arrays.asList( new RemoteGossipMember("mycluster", URI.create(args[2]), args[3])), s, (a,b) -> {}, new MetricRegistry());
     gossipService.start();
