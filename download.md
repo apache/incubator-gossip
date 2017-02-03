@@ -26,19 +26,9 @@ limitations under the License.
 
 ## {{ site.data.project.name }} Downloads
 
-There are no official Apache releases for {{ site.data.project.short_name }} yet. 
-
-{% comment %}
-You can download and build the latest code from [GitHub]({{ site.data.project.source_repository_mirror }}).
-{% endcomment %}
-
-{% comment %}
-
-TODO: uncoment this when we have official releases of Gossip
-
 {{ site.data.project.name }} is released as a source artifact, and also through Maven.
 
-### Source releases
+## Source releases
 
 Release          | Date       | Commit   | Download
 :--------------- | :--------- | :------- | :-------
@@ -46,10 +36,10 @@ Release          | Date       | Commit   | Download
 {% endcomment %}{% if post.fullVersion %}{% comment %}
 {% endcomment %}{% assign v = post.fullVersion %}{% comment %}
 {% endcomment %}{% else %}{% comment %}
-{% endcomment %}{% capture v %}apache-{{ site.data.project.unix_name }}-{{ post.version }}{% endcapture %}{% comment %}
+{% endcomment %}{% capture v %}{{ site.data.project.unix_name }}-{{ post.version }}{% endcapture %}{% comment %}
 {% endcomment %}{% endif %}{% comment %}
 {% endcomment %}{% if forloop.index0 < 2 %}{% comment %}
-{% endcomment %}{% capture p %}http://www.apache.org/dyn/closer.lua?filename={{ site.data.project.unix_name }}/{{ v }}{% endcapture %}{% comment %}
+{% endcomment %}{% capture p %}http://www.apache.org/dyn/closer.lua?filename={{ site.data.project.incubator_slash_name }}/{{ v }}{% endcapture %}{% comment %}
 {% endcomment %}{% assign q = "&action=download" %}{% comment %}
 {% endcomment %}{% assign d = "https://www.apache.org/dist" %}{% comment %}
 {% endcomment %}{% else %}{% comment %}
@@ -57,18 +47,16 @@ Release          | Date       | Commit   | Download
 {% endcomment %}{% assign q = "" %}{% comment %}
 {% endcomment %}{% assign d = "https://archive.apache.org/dist/incubator" %}{% comment %}
 {% endcomment %}{% endif %}{% comment %}
-{% endcomment %}<a href="{{ site.baseurl }}/history.html#{{ post.tag }}">{{ post.version }}</a>{% comment %}
-{% endcomment %} | {{ post.date | date_to_string }}{% comment %}
-{% endcomment %} | <a href="https://github.com/apache/{{ site.data.project.unix_name }}/commit/{{ post.sha }}">{{ post.sha }}</a>{% comment %}
-{% endcomment %} | <a href="{{ p }}/{{ v }}-src.tar.gz{{ q }}">tar</a>{% comment %}
-{% endcomment %} (<a href="{{ d }}/{{ site.data.project.unix_name }}/{{ v }}/{{ v }}-src.tar.gz.md5">md5</a>{% comment %}
-{% endcomment %} <a href="{{ d }}/{{ site.data.project.unix_name }}/{{ v }}/{{ v }}-src.tar.gz.asc">pgp</a>){% comment %}
-{% endcomment %} {% raw %}<br>{% endraw %}{% comment %}
-{% endcomment %} <a href="{{ p }}/{{ v }}-src.zip{{ q }}">zip</a>{% comment %}
-{% endcomment %} (<a href="{{ d }}/{{ site.data.project.unix_name }}/{{ v }}/{{ v }}-src.zip.md5">md5</a>{% comment %}
-{% endcomment %} <a href="{{ d }}/{{ site.data.project.unix_name }}/{{ v }}/{{ v }}-src.zip.asc">pgp</a>){% comment %}
+{% endcomment %}{{ post.version }}{% comment %}
+{% endcomment %}  | {{ post.date | date_to_string }}{% comment %}
+{% endcomment %}  | <a href="https://github.com/apache/{{ site.data.project.incubator_name }}/commit/{{ post.sha }}">{{ post.sha }}</a>{% comment %}
+{% endcomment %}  | <a href="{{ p }}/{{ v }}-source-release.zip{{ q }}">zip</a>{% comment %}
+{% endcomment %}  (<a href="{{ d }}/{{ site.data.project.incubator_slash_name }}/{{ v }}/{{ v }}-source-release.zip.md5">md5</a>{% comment %}
+{% endcomment %} <a href="{{ d }}/{{ site.data.project.incubator_slash_name }}/{{ v }}/{{ v }}-source-release.zip.asc">pgp</a>){% comment %}
 {% endcomment %}
 {% endfor %}
+
+### Verification
 
 Choose a source distribution in either *tar* or *zip* format,
 and [verify](http://www.apache.org/dyn/closer.cgi#verify)
@@ -86,4 +74,12 @@ succeed.
 For security, hash and signature files are always hosted at
 [Apache](https://www.apache.org/dist).
 
-{% endcomment %}
+## Maven Central
+
+{% highlight xml %}
+<dependency>
+  <groupId>org.apache.gossip</groupId>
+  <artifactId>gossip</gossip>
+  <version>...</version>
+</dependency>
+{% endhighlight %}
