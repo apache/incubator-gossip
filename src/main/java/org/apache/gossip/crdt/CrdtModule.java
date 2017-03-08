@@ -42,6 +42,13 @@ abstract class GrowOnlySetMixin<E>{
   @JsonIgnore abstract boolean isEmpty();
 }
 
+abstract class GrowOnlyCounterMixin{
+  @JsonCreator
+  GrowOnlyCounterMixin(@JsonProperty("myID") String myID, @JsonProperty("counters") Map<String , Long> count){ }
+  @JsonProperty("myID") abstract String getMyID();
+  @JsonProperty("counters") abstract Map<String , Long> getCounters();
+}
+
 //If anyone wants to take a stab at this. please have at it
 //https://github.com/FasterXML/jackson-datatype-guava/blob/master/src/main/java/com/fasterxml/jackson/datatype/guava/ser/MultimapSerializer.java
 public class CrdtModule extends SimpleModule {
@@ -56,6 +63,7 @@ public class CrdtModule extends SimpleModule {
   public void setupModule(SetupContext context) {
     context.setMixInAnnotations(OrSet.class, OrSetMixin.class);
     context.setMixInAnnotations(GrowOnlySet.class, GrowOnlySetMixin.class);
+    context.setMixInAnnotations(GrowOnlyCounter.class, GrowOnlyCounterMixin.class);
   }
 
 }
