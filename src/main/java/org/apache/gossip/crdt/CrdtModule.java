@@ -44,8 +44,7 @@ abstract class GrowOnlySetMixin<E>{
 
 abstract class GrowOnlyCounterMixin{
   @JsonCreator
-  GrowOnlyCounterMixin(@JsonProperty("myID") String myID, @JsonProperty("counters") Map<String , Long> count){ }
-  @JsonProperty("myID") abstract String getMyID();
+  GrowOnlyCounterMixin(@JsonProperty("counters") Map<String , Long> counters){ }
   @JsonProperty("counters") abstract Map<String , Long> getCounters();
 }
 

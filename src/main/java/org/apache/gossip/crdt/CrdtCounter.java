@@ -17,7 +17,6 @@
  */
 package org.apache.gossip.crdt;
 
-import java.util.Set;
 
 public interface CrdtCounter<ValueType extends Number, R extends CrdtCounter<ValueType, R>>
 extends Crdt<ValueType, R> {

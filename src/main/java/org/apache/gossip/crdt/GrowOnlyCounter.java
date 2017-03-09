@@ -1,94 +1,113 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.apache.gossip.crdt;
 
+import org.apache.gossip.manager.GossipManager;
 
-import java.lang.annotation.ElementType;
 import java.util.HashMap;
 import java.util.Map;
 
 public class GrowOnlyCounter implements CrdtCounter<Long, GrowOnlyCounter> {
 
+	private final Map<String, Long> counters = new HashMap<>();
 
-    private final Map<String, Long> counters = new HashMap<>();
-    private final String myID;
+	GrowOnlyCounter(Map<String, Long> counters) {
+		this.counters.putAll(counters);
+	}
 
-    public GrowOnlyCounter(String myID) {
-        this.myID = myID;
-        counters.putIfAbsent(myID, 0L);
-    }
+	public GrowOnlyCounter(GrowOnlyCounter growOnlyCounter, Builder builder) {
+		this.counters.putAll(growOnlyCounter.counters);
+		if (this.counters.containsKey(builder.myId)) {
+			Long newValue = this.counters.get(builder.myId) + builder.counter;
+			this.counters.replace(builder.myId, newValue);
+		} else {
+			this.counters.put(builder.myId, builder.counter);
+		}
+	}
 
-    private GrowOnlyCounter(String myID, Long count) {
-        this.myID = myID;
-        counters.putIfAbsent(myID, count);
-    }
+	public GrowOnlyCounter(Builder builder) {
+		this.counters.put(builder.myId, builder.counter);
+	}
 
-    private GrowOnlyCounter(String myID, Map<String, Long> counters) {
-        this.myID = myID;
-        this.counters.putAll(counters);
-    }
+	public GrowOnlyCounter(GossipManager manager) {
+		this.counters.put(manager.getMyself().getId(), 0L);
+	}
 
+	public GrowOnlyCounter(GrowOnlyCounter growOnlyCounter, GrowOnlyCounter other) {
+		this.counters.putAll(growOnlyCounter.counters);
+		for (Map.Entry<String, Long> entry : other.counters.entrySet()) {
+			String otherKey = entry.getKey();
+			Long otherValue = entry.getValue();
 
-    @Override
-    public GrowOnlyCounter merge(GrowOnlyCounter other) {
-        //System.out.println(other);
-        this.counters.putIfAbsent(other.myID, other.counters.get(other.myID));
-        Map<String , Long> updatedCounter = new HashMap<>();
-        for (Map.Entry<String, Long> entry : this.counters.entrySet()) {
-            String key = entry.getKey();
-            Long value = entry.getValue();
+			if (this.counters.containsKey(otherKey)) {
+				Long newValue = Math.max(this.counters.get(otherKey), otherValue);
+				this.counters.replace(otherKey, newValue);
+			} else {
+				this.counters.put(otherKey, otherValue);
+			}
+		}
+	}
 
-            if(other.counters.containsKey(key)){
-                Long newValue = Math.max(value,other.counters.get(key));
-                updatedCounter.put(key,newValue);
-            }else {
-                updatedCounter.put(key,value);
-            }
+	@Override public GrowOnlyCounter merge(GrowOnlyCounter other) {
+		return new GrowOnlyCounter(this, other);
+	}
 
-        }
+	@Override public Long value() {
+		Long globalCount = 0L;
+		for (Long increment : counters.values()) {
+			globalCount += increment;
+		}
+		return globalCount;
+	}
 
-        return new GrowOnlyCounter(myID,updatedCounter);
-    }
+	@Override public GrowOnlyCounter optimize() {
+		return new GrowOnlyCounter(counters);
+	}
 
-    @Override
-    public Long value() {
-        Long globalCount = 0L;
-        for (Long increment : counters.values()) {
-            globalCount += increment;
-        }
-        return globalCount;
-    }
+	@Override public boolean equals(Object obj) {
+		if (getClass() != obj.getClass())
+			return false;
+		GrowOnlyCounter other = (GrowOnlyCounter) obj;
+		return value().longValue() == other.value().longValue();
+	}
 
-    @Override
-    public GrowOnlyCounter optimize() {
-        return new GrowOnlyCounter(myID, counters.get(myID));
-    }
+	@Override public String toString() {
+		return "GrowOnlyCounter [counters= " + counters + ", Value=" + value() + "]";
+	}
 
-    @Override
-    public boolean equals(Object obj) {
+	Map<String, Long> getCounters() {
+		return counters;
+	}
 
-        GrowOnlyCounter other = (GrowOnlyCounter) obj;
+	public static class Builder {
 
-        return value().longValue() == other.value().longValue();
-    }
+		private final String myId;
+		private Long counter;
 
-    public void increase() {
-        counters.replace(myID, counters.get(myID) + 1);
-    }
+		public Builder(GossipManager gossipManager) {
+			this.myId = gossipManager.getMyself().getId();
+			this.counter = 0L;
+		}
 
-    public void increaseBy(int count) {
-        counters.replace(myID, counters.get(myID) + count);
-    }
-
-
-    @Override
-    public String toString() {
-        return "GrowOnlyCounter [counters= " + counters + ", Value=" + value() + "]";
-    }
-
-    String getMyID() {
-        return myID;
-    }
-
-    Map<String, Long> getCounters() {
-        return counters;
-    }
+		public GrowOnlyCounter.Builder increment(Integer count) {
+			this.counter += count;
+			return this;
+		}
+	}
 }
