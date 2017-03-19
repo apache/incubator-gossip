@@ -17,59 +17,98 @@
  */
 package org.apache.gossip.accrual;
 
-import java.net.URI;
-
-import org.apache.gossip.LocalMember;
+import org.apache.gossip.GossipSettings;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.jupiter.api.Test;
 import org.junit.platform.runner.JUnitPlatform;
 import org.junit.runner.RunWith;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+
 @RunWith(JUnitPlatform.class)
 public class FailureDetectorTest {
-  
-  @Test
-  public void aNormalTest(){
-    int samples = 1;
-    int windowSize = 1000;
-    LocalMember member = new LocalMember("", URI.create("udp://127.0.0.1:1000"), 
-            "", 0L, null, windowSize, samples, "normal");
-    member.recordHeartbeat(5);
-    member.recordHeartbeat(10);
-    Assert.assertEquals(new Double(0.3010299956639812), member.detect(10));
+
+  static final Double failureThreshold = new GossipSettings().getConvictThreshold();
+
+  List<Integer> generateTimeList(int begin, int end, int step){
+    List<Integer> values = new ArrayList<>();
+
+    Random rand = new Random();
+
+    for (int i = begin; i < end; i += step){
+      int delta = (int) ((rand.nextDouble() - 0.5) * step / 2);
+
+      values.add(i + delta);
+    }
+    return values;
   }
 
   @Test
-  public void aTest(){
-    int samples = 1;
-    int windowSize = 1000;
-    LocalMember member = new LocalMember("", URI.create("udp://127.0.0.1:1000"), 
-            "", 0L, null, windowSize, samples, "exponential");
-    member.recordHeartbeat(5);
-    member.recordHeartbeat(10);
-    Assert.assertEquals(new Double(0.4342944819032518), member.detect(10));
-    Assert.assertEquals(new Double(0.5211533782839021), member.detect(11));
-    Assert.assertEquals(new Double(1.3028834457097553), member.detect(20));
-    Assert.assertEquals(new Double(3.9), member.detect(50), .01);
-    Assert.assertEquals(new Double(8.25), member.detect(100), .01);
-    Assert.assertEquals(new Double(12.6), member.detect(150), .01);
-    Assert.assertEquals(new Double(14.77), member.detect(175), .01);
-    Assert.assertEquals(new Double(Double.POSITIVE_INFINITY), member.detect(500), .01);
-    member.recordHeartbeat(4);   
-    Assert.assertEquals(new Double(12.6), member.detect(150), .01);
+  public void normalDistribution(){
+    FailureDetector fd = new FailureDetector(1, 1000, "normal");
+
+    List<Integer> values = generateTimeList(0, 10000, 100);
+
+    Double deltaSum = 0.0;
+    Integer deltaCount = 0;
+    for (int i = 0; i < values.size() - 1; i++){
+      fd.recordHeartbeat(values.get(i));
+      if (i != 0){
+        deltaSum += values.get(i) - values.get(i - 1);
+        deltaCount++;
+      }
+    }
+    Integer lastRecorded = values.get(values.size() - 2);
+
+    //after "step" delay we need to be considered UP
+    Assert.assertTrue(fd.computePhiMeasure(values.get(values.size() - 1)) < failureThreshold);
+
+    //if we check phi-measure after mean delay we get value for 0.5 probability(normal distribution)
+    Assert.assertEquals(fd.computePhiMeasure(lastRecorded + Math.round(deltaSum / deltaCount)), -Math.log10(0.5), 0.1);
   }
-  
-  @Ignore
-  public void sameHeartbeatTest(){
-    int samples = 1;
-    int windowSize = 1000;
-    LocalMember member = new LocalMember("", URI.create("udp://127.0.0.1:1000"), 
-            "", 0L, null, windowSize, samples, "exponential");
-    member.recordHeartbeat(5);
-    member.recordHeartbeat(5);
-    member.recordHeartbeat(5);
-    Assert.assertEquals(new Double(0.4342944819032518), member.detect(10));
+
+  @Test
+  public void checkMinimumSamples(){
+    Integer minimumSamples = 5;
+    FailureDetector fd = new FailureDetector(minimumSamples, 1000, "normal");
+    for (int i = 0; i < minimumSamples + 1; i++){ // +1 because we don't place first heartbeat into structure
+      Assert.assertNull(fd.computePhiMeasure(100));
+      fd.recordHeartbeat(i);
+    }
+    Assert.assertNotNull(fd.computePhiMeasure(100));
   }
-  
+
+  @Test
+  public void checkAlive(){
+    final FailureDetector fd = new FailureDetector(5, 1000, "normal");
+
+    List<Integer> times = generateTimeList(0, 10000, 100);
+    for (int i = 0; i < times.size(); i++){
+      Double current = fd.computePhiMeasure(times.get(i));
+      if (current != null){
+        Assert.assertTrue(current < failureThreshold);
+      }
+
+      fd.recordHeartbeat(times.get(i));
+    }
+  }
+
+  @Test
+  public void checkMonotonicDead(){
+    final FailureDetector fd = new FailureDetector(5, 1000, "normal");
+
+    generateTimeList(0, 10000, 100).forEach(fd::recordHeartbeat);
+
+    List<Integer> times = generateTimeList(20000, 20500, 5);
+    Double prev = null;
+    for (int i = 0; i < times.size(); i++){
+      Double current = fd.computePhiMeasure(times.get(i));
+      if (current != null && prev != null){
+        Assert.assertTrue(current >= prev);
+      }
+      prev = current;
+    }
+  }
 }

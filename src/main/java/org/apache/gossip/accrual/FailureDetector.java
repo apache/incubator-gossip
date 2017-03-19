@@ -21,72 +21,59 @@ import org.apache.commons.math.MathException;
 import org.apache.commons.math.distribution.ExponentialDistributionImpl;
 import org.apache.commons.math.distribution.NormalDistributionImpl;
 import org.apache.commons.math.stat.descriptive.DescriptiveStatistics;
-import org.apache.gossip.LocalMember;
-import org.apache.log4j.Logger;
 
 public class FailureDetector {
 
-  private static final Logger LOGGER = Logger.getLogger(FailureDetector.class);
   private final DescriptiveStatistics descriptiveStatistics;
   private final long minimumSamples;
   private volatile long latestHeartbeatMs = -1;
-  private final LocalMember parent;
   private final String distribution;
-  
-  public FailureDetector(LocalMember parent, long minimumSamples, int windowSize, String distribution){
-    this.parent = parent;
+
+  public FailureDetector(long minimumSamples, int windowSize, String distribution){
     descriptiveStatistics = new DescriptiveStatistics(windowSize);
     this.minimumSamples = minimumSamples;
     this.distribution = distribution;
   }
-  
+
   /**
-   * Updates the statistics based on the delta between the last 
+   * Updates the statistics based on the delta between the last
    * heartbeat and supplied time
+   *
    * @param now the time of the heartbeat in milliseconds
    */
-  public void recordHeartbeat(long now){
-    if (now < latestHeartbeatMs)
-      return;
-    if (now - latestHeartbeatMs == 0){
+  public synchronized void recordHeartbeat(long now){
+    if (now <= latestHeartbeatMs){
       return;
     }
-    synchronized (descriptiveStatistics) {
-      if (latestHeartbeatMs != -1){
-        descriptiveStatistics.addValue(now - latestHeartbeatMs);
-      } else {
-        latestHeartbeatMs = now;
-      }
+
+    if (latestHeartbeatMs != -1){
+      descriptiveStatistics.addValue(now - latestHeartbeatMs);
     }
+    latestHeartbeatMs = now;
   }
-  
-  public Double computePhiMeasure(long now)  {
-    if (latestHeartbeatMs == -1 || descriptiveStatistics.getN() < minimumSamples) {
-      LOGGER.debug(
-              String.format( "%s latests %s samples %s minumumSamples %s", parent.getId(), 
-                      latestHeartbeatMs, descriptiveStatistics.getN(), minimumSamples));
+
+  public synchronized Double computePhiMeasure(long now){
+    if (latestHeartbeatMs == -1 || descriptiveStatistics.getN() < minimumSamples){
       return null;
     }
-    synchronized (descriptiveStatistics) {
-      long delta = now - latestHeartbeatMs;
-      try {
-        double probability = 0.0;
-        if (distribution.equals("normal")){
-          double variance = descriptiveStatistics.getVariance();
-          probability = 1.0d - new NormalDistributionImpl(descriptiveStatistics.getMean(), 
-                  variance == 0 ? 0.1 : variance).cumulativeProbability(delta);
-        } else {
-          probability = 1.0d - new ExponentialDistributionImpl(descriptiveStatistics.getMean()).cumulativeProbability(delta);
-        }
-        return -1.0d * Math.log10(probability);
-      } catch (MathException | IllegalArgumentException e) {
-        StringBuilder sb = new StringBuilder();
-        for ( double d: descriptiveStatistics.getSortedValues()){
-          sb.append(d + " ");
-        }
-        LOGGER.debug(e.getMessage() +" "+ sb.toString() +" "+ descriptiveStatistics);
-        throw new IllegalArgumentException(e);
+    long delta = now - latestHeartbeatMs;
+    try {
+      double probability;
+      if (distribution.equals("normal")){
+        double standardDeviation = descriptiveStatistics.getStandardDeviation();
+        standardDeviation = standardDeviation < 0.1 ? 0.1 : standardDeviation;
+        probability = new NormalDistributionImpl(descriptiveStatistics.getMean(), standardDeviation).cumulativeProbability(delta);
+      } else {
+        probability = new ExponentialDistributionImpl(descriptiveStatistics.getMean()).cumulativeProbability(delta);
       }
+
+      final double eps = 1e-12;
+      if (1 - probability < eps){
+        probability = 1.0;
+      }
+      return -1.0d * Math.log10(1.0d - probability);
+    } catch (MathException | IllegalArgumentException e) {
+      return null;
     }
   }
 }

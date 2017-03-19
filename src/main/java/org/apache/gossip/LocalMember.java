@@ -43,7 +43,7 @@ public class LocalMember extends Member {
   public LocalMember(String clusterName, URI uri, String id,
           long heartbeat, Map<String,String> properties, int windowSize, int minSamples, String distribution) {
     super(clusterName, uri, id, heartbeat, properties );
-    detector = new FailureDetector(this, minSamples, windowSize, distribution);
+    detector = new FailureDetector(minSamples, windowSize, distribution);
   }
 
   protected LocalMember(){
