@@ -30,19 +30,18 @@ public class GossipSettings {
   private int gossipInterval = 10;
 
   /** Time between cleanups in ms. Default is 10 seconds. */
-  private int cleanupInterval = 10000;
+  private int cleanupInterval = 5000;
 
   /** the minimum samples needed before reporting a result */
-  private int minimumSamples = 1;
+  private int minimumSamples = 5;
   
   /** the number of samples to keep per host */
   private int windowSize = 5000;
   
   /** the threshold for the detector */
-  //private double convictThreshold = 2.606201185901408;
-  private double convictThreshold = 2.606201185901408;
+  private double convictThreshold = 10;
   
-  private String distribution = "exponential";
+  private String distribution = "normal";
   
   private String activeGossipClass = "org.apache.gossip.manager.SimpleActiveGossipper";
   

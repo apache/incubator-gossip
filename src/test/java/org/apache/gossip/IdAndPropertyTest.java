@@ -63,7 +63,7 @@ public class IdAndPropertyTest extends AbstractIntegrationBase {
     y.put("datacenter", "dc2");
     y.put("rack", "rack2");
     GossipManager gossipService2 = GossipManagerBuilder.newBuilder().cluster("a")
-            .uri( new URI("udp://" + "127.0.0.1" + ":" + (29000 + 1)))
+            .uri( new URI("udp://" + "127.0.0.1" + ":" + (29000 + 10)))
             .id("1")
             .properties(y)
             .gossipMembers(Arrays.asList(new RemoteMember("a",

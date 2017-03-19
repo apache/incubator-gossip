@@ -41,7 +41,7 @@ public class GossipMemberStateRefresher implements Runnable {
   private final BiFunction<String, String, PerNodeDataMessage> findPerNodeGossipData;
 
   public GossipMemberStateRefresher(Map<LocalMember, GossipState> members, GossipSettings settings,
-                                    GossipListener listener, BiFunction<String, String, PerNodeDataMessage> findPerNodeGossipData) {
+                                    GossipListener listener, BiFunction<String, String, PerNodeDataMessage> findPerNodeGossipData){
     this.members = members;
     this.settings = settings;
     this.listener = listener;
@@ -49,7 +49,7 @@ public class GossipMemberStateRefresher implements Runnable {
     clock = new SystemClock();
   }
 
-  public void run() {
+  public void run(){
     try {
       runOnce();
     } catch (RuntimeException ex) {
@@ -57,39 +57,43 @@ public class GossipMemberStateRefresher implements Runnable {
     }
   }
 
-  public void runOnce() {
-    for (Entry<LocalMember, GossipState> entry : members.entrySet()) {
+  public void runOnce(){
+    for (Entry<LocalMember, GossipState> entry : members.entrySet()){
       boolean userDown = processOptimisticShutdown(entry);
       if (userDown)
         continue;
-      try {
-        Double phiMeasure = entry.getKey().detect(clock.nanoTime());
-        if (phiMeasure != null) {
-          GossipState requiredState = calcRequiredState(phiMeasure);
-          if (entry.getValue() != requiredState) {
-            members.put(entry.getKey(), requiredState);
-            listener.gossipEvent(entry.getKey(), requiredState);
-          }
-        }
-      } catch (IllegalArgumentException ex) {
-        //0.0 returns throws exception computing the mean.
 
-        long now = clock.nanoTime();
-        long nowInMillis = TimeUnit.MILLISECONDS.convert(now, TimeUnit.NANOSECONDS);
-        if (nowInMillis - settings.getCleanupInterval() > entry.getKey().getHeartbeat() && entry.getValue() == GossipState.UP) {
-          LOGGER.warn("Marking down");
-          members.put(entry.getKey(), GossipState.DOWN);
-          listener.gossipEvent(entry.getKey(), GossipState.DOWN);
-        }
-      } //end catch
-    } // end for
+      Double phiMeasure = entry.getKey().detect(clock.nanoTime());
+      GossipState requiredState;
+
+      if (phiMeasure != null){
+        requiredState = calcRequiredState(phiMeasure);
+      } else {
+        requiredState = calcRequiredStateCleanupInterval(entry.getKey(), entry.getValue());
+      }
+
+      if (entry.getValue() != requiredState){
+        members.put(entry.getKey(), requiredState);
+        listener.gossipEvent(entry.getKey(), requiredState);
+      }
+    }
   }
 
-  public GossipState calcRequiredState(Double phiMeasure) {
+  public GossipState calcRequiredState(Double phiMeasure){
     if (phiMeasure > settings.getConvictThreshold())
       return GossipState.DOWN;
     else
       return GossipState.UP;
+  }
+
+  public GossipState calcRequiredStateCleanupInterval(LocalMember member, GossipState state){
+    long now = clock.nanoTime();
+    long nowInMillis = TimeUnit.MILLISECONDS.convert(now, TimeUnit.NANOSECONDS);
+    if (nowInMillis - settings.getCleanupInterval() > member.getHeartbeat()){
+      return GossipState.DOWN;
+    } else {
+      return state;
+    }
   }
 
   /**
@@ -99,15 +103,15 @@ public class GossipMemberStateRefresher implements Runnable {
    * @param l member to consider
    * @return true if node forced down
    */
-  public boolean processOptimisticShutdown(Entry<LocalMember, GossipState> l) {
+  public boolean processOptimisticShutdown(Entry<LocalMember, GossipState> l){
     PerNodeDataMessage m = findPerNodeGossipData.apply(l.getKey().getId(), ShutdownMessage.PER_NODE_KEY);
-    if (m == null) {
+    if (m == null){
       return false;
     }
     ShutdownMessage s = (ShutdownMessage) m.getPayload();
-    if (s.getShutdownAtNanos() > l.getKey().getHeartbeat()) {
+    if (s.getShutdownAtNanos() > l.getKey().getHeartbeat()){
       members.put(l.getKey(), GossipState.DOWN);
-      if (l.getValue() == GossipState.UP) {
+      if (l.getValue() == GossipState.UP){
         listener.gossipEvent(l.getKey(), GossipState.DOWN);
       }
       return true;
