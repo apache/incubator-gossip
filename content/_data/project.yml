@@ -1,0 +1,64 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to you under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# Apache Project configurations
+#
+name: Apache Gossip™ (incubating)
+short_name: Gossip
+unix_name: gossip
+incubator_name: incubator-gossip
+incubator_slash_name: incubator/gossip
+description: Apache Gossip™ protocol is a method for a group of nodes to discover and check the liveliness of a cluster.
+
+download: download
+
+dev_list: dev@gossip.incubator.apache.org
+dev_list_subscribe: dev-subscribe@gossip.incubator.apache.org
+dev_list_unsubscribe: dev-unsubscribe@gossip.incubator.apache.org
+dev_list_archive: http://mail-archives.apache.org/mod_mbox/gossip-dev/
+dev_list_archive_mailarchive: https://www.mail-archive.com/dev@gossip.incubator.apache.org/
+dev_list_archive_markmail:
+
+user_list:
+user_list_subscribe:
+user_list_unsubscribe:
+user_list_archive:
+user_list_archive_mailarchive:
+user_list_archive_markmail:
+
+commits_list: commits@gossip.incubator.apache.org
+commits_list_subscribe: commits-subscribe@gossip.incubator.apache.org
+commits_list_unsubscribe: commits-unsubscribe@gossip.incubator.apache.org
+commits_list_archive: http://mail-archives.apache.org/mod_mbox/gossip-commits/
+commits_list_archive_mailarchive: https://www.mail-archive.com/commits@gossip.incubator.apache.org/
+commits_list_archive_markmail:
+
+notifications_list: notifications@gossip.incubator.apache.org
+notifications_list_subscribe: notifications-subscribe@gossip.incubator.apache.org
+notifications_list_unsubscribe: notifications-unsubscribe@gossip.incubator.apache.org
+notifications_list_archive: http://mail-archives.apache.org/mod_mbox/gossip-notifications/
+notifications_list_archive_mailarchive: https://www.mail-archive.com/notifications@gossip.incubator.apache.org/
+notifications_list_archive_markmail:
+
+
+jira: GOSSIP
+
+source_repository: https://git-wip-us.apache.org/repos/asf/incubator-gossip.git
+source_repository_mirror: https://github.com/apache/incubator-gossip.git
+
+website_repository: https://github.com/apache/incubator-gossip.git
+website_repository_mirror: https://github.com/apache/incubator-gossip.git
+
+podling: true
