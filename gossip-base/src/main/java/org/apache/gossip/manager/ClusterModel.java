@@ -32,8 +32,8 @@ public interface ClusterModel {
   Map<LocalMember, GossipState> getMembers();
   List<LocalMember> getLiveMembers();
   List<LocalMember> getDeadMembers();
-  Collection<SharedDataMessage> getSharedData();
-  Collection<PerNodeDataMessage> getPerNodeData();
+  Collection<SharedDataMessage> getSharedData();      // ActiveGossiper
+  Collection<PerNodeDataMessage> getPerNodeData();    // ActiveGossiper
   LocalMember getMyself();
   GossipSettings getSettings();
   long nanoTime();

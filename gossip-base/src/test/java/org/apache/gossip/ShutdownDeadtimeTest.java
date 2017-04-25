@@ -59,7 +59,7 @@ public class ShutdownDeadtimeTest {
     List<Member> startupMembers = new ArrayList<>();
     for (int i = 1; i < seedNodes + 1; ++i) {
       URI uri = new URI("udp://" + "127.0.0.1" + ":" + (30300 + i));
-      startupMembers.add(new RemoteMember(cluster, uri, i + ""));
+      startupMembers.add(new Member(cluster, uri, i + ""));
     }
     final List<GossipManager> clients = Collections.synchronizedList(new ArrayList<GossipManager>());
     final int clusterMembers = 5;

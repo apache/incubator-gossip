@@ -18,7 +18,7 @@
 package org.apache.gossip.manager.handlers;
 
 import org.apache.gossip.Member;
-import org.apache.gossip.RemoteMember;
+import org.apache.gossip.Member;
 import org.apache.gossip.manager.ClusterModel;
 import org.apache.gossip.manager.GossipCore;
 import org.apache.gossip.manager.GossipManager;
@@ -46,7 +46,7 @@ public class ActiveGossipMessageHandler implements MessageHandler {
   @Override
   public boolean invoke(GossipManager gossipManager, Base base) {
     List<Member> remoteGossipMembers = new ArrayList<>();
-    RemoteMember senderMember = null;
+    Member senderMember = null;
     UdpActiveGossipMessage activeGossipMessage = (UdpActiveGossipMessage) base;
     for (int i = 0; i < activeGossipMessage.getMembers().size(); i++) {
       URI u;
@@ -56,25 +56,25 @@ public class ActiveGossipMessageHandler implements MessageHandler {
         LOGGER.debug("Gossip message with faulty URI", e);
         continue;
       }
-      RemoteMember member = new RemoteMember(
+      Member remoteMember = new Member(
               activeGossipMessage.getMembers().get(i).getCluster(),
               u,
               activeGossipMessage.getMembers().get(i).getId(),
               activeGossipMessage.getMembers().get(i).getHeartbeat(),
               activeGossipMessage.getMembers().get(i).getProperties());
       if (i == 0) {
-        senderMember = member;
+        senderMember = remoteMember;
       }
-      if (!(member.getClusterName().equals(gossipManager.getMyself().getClusterName()))) {
+      if (!(remoteMember.getClusterName().equals(gossipManager.getMyself().getClusterName()))) {
         UdpNotAMemberFault f = new UdpNotAMemberFault();
         f.setException("Not a member of this cluster " + i);
         f.setUriFrom(activeGossipMessage.getUriFrom());
         f.setUuid(activeGossipMessage.getUuid());
         LOGGER.warn(f);
-        gossipManager.getMessaging().sendOneWay(f, member.getUri());
+        gossipManager.getMessaging().sendOneWay(f, remoteMember.getUri());
         continue;
       }
-      remoteGossipMembers.add(member);
+      remoteGossipMembers.add(remoteMember);
     }
     UdpActiveGossipOk o = new UdpActiveGossipOk();
     o.setUriFrom(activeGossipMessage.getUriFrom());

@@ -68,7 +68,7 @@ public class IdAndPropertyTest extends AbstractIntegrationBase {
             .uri( new URI("udp://" + "127.0.0.1" + ":" + (29000 + 10)))
             .id("1")
             .properties(y)
-            .gossipMembers(Arrays.asList(new RemoteMember("a",
+            .gossipMembers(Arrays.asList(new Member("a",
                     new URI("udp://" + "127.0.0.1" + ":" + (29000 + 0)), "0")))
             .gossipSettings(settings).build();
     gossipService2.init();

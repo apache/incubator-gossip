@@ -21,7 +21,7 @@ import java.net.URI;
 import java.net.UnknownHostException;
 import java.util.Arrays;
 import org.apache.gossip.GossipSettings;
-import org.apache.gossip.RemoteMember;
+import org.apache.gossip.Member;
 import org.apache.gossip.manager.GossipManager;
 import org.apache.gossip.manager.GossipManagerBuilder;
 
@@ -34,7 +34,7 @@ public class StandAloneNode {
             .cluster("mycluster")
             .uri(URI.create(args[0]))
             .id(args[1])
-            .gossipMembers(Arrays.asList( new RemoteMember("mycluster", URI.create(args[2]), args[3])))
+            .gossipMembers(Arrays.asList( new Member("mycluster", URI.create(args[2]), args[3])))
             .gossipSettings(s)
             .build();
     gossipService.init();

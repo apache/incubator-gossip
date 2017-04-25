@@ -22,7 +22,7 @@ import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import org.apache.gossip.Member;
 import org.apache.gossip.LocalMember;
-import org.apache.gossip.RemoteMember;
+import org.apache.gossip.Member;
 import org.apache.gossip.crdt.Crdt;
 import org.apache.gossip.event.GossipState;
 import org.apache.gossip.model.*;
@@ -46,7 +46,7 @@ public class GossipCore implements GossipCoreConstants {
   private final ConcurrentHashMap<String, SharedDataMessage> sharedData;
   private final ClusterModel clusterModel;
 
-  public GossipCore(GossipManager manager, MetricRegistry metrics){
+  public GossipCore(ClusterModel manager, MetricRegistry metrics){
     this.clusterModel = manager;
     perNodeData = new ConcurrentHashMap<>();
     sharedData = new ConcurrentHashMap<>();
@@ -139,7 +139,7 @@ public class GossipCore implements GossipCoreConstants {
    * @param remoteList
    *
    */
-  public void mergeLists(RemoteMember senderMember, List<Member> remoteList) {
+  public void mergeLists(Member senderMember, List<Member> remoteList) {
     if (LOGGER.isDebugEnabled()){
       debugState(senderMember, remoteList);
     }
@@ -180,7 +180,7 @@ public class GossipCore implements GossipCoreConstants {
     }
   }
 
-  private void debugState(RemoteMember senderMember,
+  private void debugState(Member senderMember,
           List<Member> remoteList){
     LOGGER.warn(
           "-----------------------\n" +

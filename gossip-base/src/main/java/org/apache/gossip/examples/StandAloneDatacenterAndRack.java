@@ -25,7 +25,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.gossip.GossipSettings;
-import org.apache.gossip.RemoteMember;
+import org.apache.gossip.Member;
 import org.apache.gossip.manager.DatacenterRackAwareGossipStrategy;
 import org.apache.gossip.manager.GossipManager;
 import org.apache.gossip.manager.GossipManagerBuilder;
@@ -49,7 +49,7 @@ public class StandAloneDatacenterAndRack {
             .uri(URI.create(args[0]))
             .id(args[1])
             .gossipSettings(s)
-            .gossipMembers(Arrays.asList(new RemoteMember("mycluster", URI.create(args[2]), args[3])))
+            .gossipMembers(Arrays.asList(new Member("mycluster", URI.create(args[2]), args[3])))
             .properties(props)
             .build();
     manager.init();

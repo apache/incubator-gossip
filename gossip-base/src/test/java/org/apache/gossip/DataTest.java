@@ -54,7 +54,7 @@ public class DataTest extends AbstractIntegrationBase {
     List<Member> startupMembers = new ArrayList<>();
     for (int i = 1; i < seedNodes+1; ++i) {
       URI uri = new URI("udp://" + "127.0.0.1" + ":" + (50000 + i));
-      startupMembers.add(new RemoteMember(cluster, uri, i + ""));
+      startupMembers.add(new Member(cluster, uri, i + ""));
     }
     final List<GossipManager> clients = new ArrayList<>();
     final int clusterMembers = 2;
