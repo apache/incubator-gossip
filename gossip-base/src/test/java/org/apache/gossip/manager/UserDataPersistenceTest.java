@@ -21,7 +21,12 @@ import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 import org.apache.gossip.GossipSettings;
 import org.apache.gossip.model.PerNodeDataMessage;
@@ -55,13 +60,16 @@ public class UserDataPersistenceTest {
       gossipService.getUserDataState().writePerNodeToDisk();
       gossipService.getUserDataState().writeSharedToDisk();
       { //read the raw data and confirm
-        ConcurrentHashMap<String, ConcurrentHashMap<String, PerNodeDataMessage>> l = gossipService.getUserDataState().readPerNodeFromDisk();
-        Assert.assertEquals("red", ((AToothpick) l.get(nodeId).get("a").getPayload()).getColor());
+        PerNodeDataMessage message = gossipService.getUserDataState().readPerNodeFromDisk()
+            .stream().filter(m -> m.getKey().equals("a") && m.getNodeId().equals(nodeId)).collect(Collectors.toList())
+            .get(0);
+        Assert.assertEquals("red", ((AToothpick) message.getPayload()).getColor());
       }
       {
-        ConcurrentHashMap<String, SharedDataMessage> l = 
-                gossipService.getUserDataState().readSharedDataFromDisk();
-        Assert.assertEquals("blue", ((AToothpick) l.get("a").getPayload()).getColor());
+        SharedDataMessage message = gossipService.getUserDataState().readSharedDataFromDisk()
+            .stream().filter(m -> m.getKey().equals("a")).collect(Collectors.toList())
+            .get(0);
+        Assert.assertEquals("blue", ((AToothpick) message.getPayload()).getColor());
       }
       gossipService.shutdown();
     }

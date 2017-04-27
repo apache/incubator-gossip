@@ -207,10 +207,10 @@ public class StartupSettings {
     while (it.hasNext()){
       JsonNode child = it.next();
       URI uri3 = new URI(child.get("uri").textValue());
-      RemoteMember member = new RemoteMember(child.get("cluster").asText(),
+      Member remoteMember = new Member(child.get("cluster").asText(),
               uri3, "", 0, new HashMap<String,String>());
-      settings.addGossipMember(member);
-      configMembersDetails += member.computeAddress();
+      settings.addGossipMember(remoteMember);
+      configMembersDetails += remoteMember.computeAddress();
       configMembersDetails += ", ";
     }
     log.info(configMembersDetails + "]");

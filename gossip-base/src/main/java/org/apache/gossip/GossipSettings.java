@@ -43,8 +43,7 @@ public class GossipSettings {
   
   private String distribution = "normal";
   
-  private String activeGossipClass = "org.apache.gossip.manager.SimpleActiveGossipper";
-  
+  private String gossipStrategy = "org.apache.gossip.manager.SimpleGossipStrategy";
   private String transportManagerClass = "org.apache.gossip.transport.udp.UdpTransportManager";
   private String protocolManagerClass = "org.apache.gossip.protocol.json.JacksonProtocolManager";
   
@@ -162,12 +161,12 @@ public class GossipSettings {
     this.distribution = distribution;
   }
 
-  public String getActiveGossipClass() {
-    return activeGossipClass;
+  public String getGossipStrategy() {
+    return gossipStrategy;
   }
 
-  public void setActiveGossipClass(String activeGossipClass) {
-    this.activeGossipClass = activeGossipClass;
+  public void setGossipStrategy(String gossipStrategy) {
+    this.gossipStrategy = gossipStrategy;
   }
 
   public Map<String, String> getActiveGossipProperties() {

@@ -46,7 +46,7 @@ public class MessageHandlerTest {
       data = 0;
     }
 
-    public boolean invoke(GossipCore gossipCore, GossipManager gossipManager, Base base) {
+    public boolean invoke(GossipManager gossipManager, Base base) {
       data = ((FakeMessageData) base).data;
       return true;
     }
@@ -59,7 +59,7 @@ public class MessageHandlerTest {
       counter = 0;
     }
 
-    public boolean invoke(GossipCore gossipCore, GossipManager gossipManager, Base base) {
+    public boolean invoke(GossipManager gossipManager, Base base) {
       counter++;
       return true;
     }
@@ -68,8 +68,8 @@ public class MessageHandlerTest {
   @Test
   public void testSimpleHandler() {
     MessageHandler mi = new TypedMessageHandler(FakeMessage.class, new FakeMessageHandler());
-    Assert.assertTrue(mi.invoke(null, null, new FakeMessage()));
-    Assert.assertFalse(mi.invoke(null, null, new ActiveGossipMessage()));
+    Assert.assertTrue(mi.invoke(null, new FakeMessage()));
+    Assert.assertFalse(mi.invoke(null, new ActiveGossipMessage()));
   }
 
   @Test(expected = NullPointerException.class)
@@ -86,11 +86,11 @@ public class MessageHandlerTest {
   public void testCallCountSimpleHandler() {
     FakeMessageHandler h = new FakeMessageHandler();
     MessageHandler mi = new TypedMessageHandler(FakeMessage.class, h);
-    mi.invoke(null, null, new FakeMessage());
+    mi.invoke(null, new FakeMessage());
     Assert.assertEquals(1, h.counter);
-    mi.invoke(null, null, new ActiveGossipMessage());
+    mi.invoke(null, new ActiveGossipMessage());
     Assert.assertEquals(1, h.counter);
-    mi.invoke(null, null, new FakeMessage());
+    mi.invoke(null, new FakeMessage());
     Assert.assertEquals(2, h.counter);
   }
 
@@ -113,7 +113,7 @@ public class MessageHandlerTest {
   public void testMessageHandlerCombiner() {
     //Empty combiner - false result
     MessageHandler mi = MessageHandlerFactory.concurrentHandler();
-    Assert.assertFalse(mi.invoke(null, null, new Base()));
+    Assert.assertFalse(mi.invoke(null, new Base()));
 
     FakeMessageHandler h = new FakeMessageHandler();
     mi = MessageHandlerFactory.concurrentHandler(
@@ -121,13 +121,13 @@ public class MessageHandlerTest {
       new TypedMessageHandler(FakeMessage.class, h)
     );
 
-    Assert.assertTrue(mi.invoke(null, null, new FakeMessage()));
-    Assert.assertFalse(mi.invoke(null, null, new ActiveGossipMessage()));
+    Assert.assertTrue(mi.invoke(null, new FakeMessage()));
+    Assert.assertFalse(mi.invoke(null, new ActiveGossipMessage()));
     Assert.assertEquals(2, h.counter);
     
     //Increase size in runtime. Should be 3 calls: 2+3 = 5
     mi = MessageHandlerFactory.concurrentHandler(mi, new TypedMessageHandler(FakeMessage.class, h));
-    Assert.assertTrue(mi.invoke(null, null, new FakeMessage()));
+    Assert.assertTrue(mi.invoke(null, new FakeMessage()));
     Assert.assertEquals(5, h.counter);
   }
 
@@ -147,7 +147,7 @@ public class MessageHandlerTest {
 
     MessageHandler mi = MessageHandlerFactory.concurrentHandler(mi1, mi2);
     
-    Assert.assertTrue(mi.invoke(null, null, new FakeMessage()));
+    Assert.assertTrue(mi.invoke(null, new FakeMessage()));
     Assert.assertEquals(4, h.counter);
   }
 
@@ -157,7 +157,7 @@ public class MessageHandlerTest {
     FakeMessageDataHandler h = new FakeMessageDataHandler();
     mi = MessageHandlerFactory.concurrentHandler(mi, new TypedMessageHandler(FakeMessageData.class, h));
 
-    Assert.assertTrue(mi.invoke(null, null, new FakeMessageData(101)));
+    Assert.assertTrue(mi.invoke(null, new FakeMessageData(101)));
     Assert.assertEquals(101, h.data);
   }
 
@@ -170,13 +170,13 @@ public class MessageHandlerTest {
     //UdpSharedGossipDataMessage with null gossipCore -> exception
     boolean thrown = false;
     try {
-      mi.invoke(null, null, new UdpSharedDataMessage());
+      mi.invoke(null, new UdpSharedDataMessage());
     } catch (NullPointerException e) {
       thrown = true;
     }
     Assert.assertTrue(thrown);
     //skips FakeMessage and FakeHandler works ok
-    Assert.assertTrue(mi.invoke(null, null, new FakeMessage()));
+    Assert.assertTrue(mi.invoke(null, new FakeMessage()));
   }
 
 }

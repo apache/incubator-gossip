@@ -17,54 +17,35 @@
  */
 package org.apache.gossip.transport;
 
-import com.codahale.metrics.MetricRegistry;
-import org.apache.gossip.manager.AbstractActiveGossiper;
-import org.apache.gossip.manager.GossipCore;
-import org.apache.gossip.manager.GossipManager;
-import org.apache.gossip.manager.PassiveGossipThread;
-import org.apache.gossip.utils.ReflectionUtils;
+import org.apache.gossip.manager.ClusterModel;
 import org.apache.log4j.Logger;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * Manage the protcol threads (active and passive gossipers).
+ * Manage the active and passive gossipers. Notify on incoming messages
  */
 public abstract class AbstractTransportManager implements TransportManager {
   
   public static final Logger LOGGER = Logger.getLogger(AbstractTransportManager.class);
   
-  private final PassiveGossipThread passiveGossipThread;
-  private final ExecutorService gossipThreadExecutor;
+  private final InterruptibleThread passiveGossipThread;
   
-  private final AbstractActiveGossiper activeGossipThread;
+  private final List<BytesListener> bytesListeners = new ArrayList<>();
   
-  public AbstractTransportManager(GossipManager gossipManager, GossipCore gossipCore) {
-    
-    passiveGossipThread = new PassiveGossipThread(gossipManager, gossipCore);
-    gossipThreadExecutor = Executors.newCachedThreadPool();
-    activeGossipThread = ReflectionUtils.constructWithReflection(
-      gossipManager.getSettings().getActiveGossipClass(),
-        new Class<?>[]{
-            GossipManager.class, GossipCore.class, MetricRegistry.class
-        },
-        new Object[]{
-            gossipManager, gossipCore, gossipManager.getRegistry()
-        });
+  public AbstractTransportManager(ClusterModel gossipManager) {
+    passiveGossipThread = new InterruptibleThread(
+        this::passiveLoop,
+        String.format("passive-%s-%s", gossipManager.getMyself().getClusterName(), gossipManager.getMyself().getId()));
   }
 
   // shut down threads etc.
   @Override
   public void shutdown() {
-    passiveGossipThread.requestStop();
-    gossipThreadExecutor.shutdown();
-    if (activeGossipThread != null) {
-      activeGossipThread.shutdown();
-    }
     try {
-      boolean result = gossipThreadExecutor.awaitTermination(10, TimeUnit.MILLISECONDS);
+      boolean result = passiveGossipThread.shutdown(100);
       if (!result) {
         // common when blocking patterns are used to read data from a socket.
         LOGGER.warn("executor shutdown timed out");
@@ -72,16 +53,41 @@ public abstract class AbstractTransportManager implements TransportManager {
     } catch (InterruptedException e) {
       LOGGER.error(e);
     }
-    gossipThreadExecutor.shutdownNow();
-  }
-
-  @Override
-  public void startActiveGossiper() {
-    activeGossipThread.init(); 
   }
 
   @Override
   public void startEndpoint() {
-    gossipThreadExecutor.execute(passiveGossipThread);
+    passiveGossipThread.start();
+  }
+  
+  public void addBytesListener(BytesListener bl) {
+    bytesListeners.add(bl);
+  }
+  
+  // used to be inside PassiveGossipThread.
+  private void passiveLoop() {
+    while (passiveGossipThread.isRunning()) {
+      try {
+        // reconstruct message, then notify listeners.
+        byte[] buf = read();
+        bytesListeners.forEach(h -> {
+          try {
+            h.bytesReceived(buf);
+          } catch (IOException ex) {
+            logAndQuit(ex);
+          }
+        });
+      } catch (IOException e) {
+        logAndQuit(e);
+      }
+    }
+  }
+  
+  private void logAndQuit(Exception e) {
+    // InterruptedException are completely normal here because of the blocking lifecycle.
+    if (!(e.getCause() instanceof InterruptedException)) {
+      LOGGER.error(e);
+    }
+    passiveGossipThread.requestShutdown();
   }
 }

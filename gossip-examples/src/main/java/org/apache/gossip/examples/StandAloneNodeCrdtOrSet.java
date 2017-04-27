@@ -23,7 +23,7 @@ import java.io.InputStreamReader;
 import java.net.URI;
 import java.util.Arrays;
 import org.apache.gossip.GossipSettings;
-import org.apache.gossip.RemoteMember;
+import org.apache.gossip.Member;
 import org.apache.gossip.crdt.GrowOnlyCounter;
 import org.apache.gossip.crdt.OrSet;
 import org.apache.gossip.manager.GossipManager;
@@ -39,7 +39,7 @@ public class StandAloneNodeCrdtOrSet {
             .cluster("mycluster")
             .uri(URI.create(args[0]))
             .id(args[1])
-            .gossipMembers(Arrays.asList( new RemoteMember("mycluster", URI.create(args[2]), args[3])))
+            .gossipMembers(Arrays.asList( new Member("mycluster", URI.create(args[2]), args[3])))
             .gossipSettings(s)
             .build();
     gossipService.init();

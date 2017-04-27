@@ -65,7 +65,7 @@ public class SignedMessageTest extends AbstractIntegrationBase {
     List<Member> startupMembers = new ArrayList<>();
     for (int i = 1; i < 2; ++i) {
       URI uri = new URI("udp://" + "127.0.0.1" + ":" + (30000 + i));
-      startupMembers.add(new RemoteMember(cluster, uri, i + ""));
+      startupMembers.add(new Member(cluster, uri, i + ""));
     }
     final List<GossipManager> clients = new ArrayList<>();
     for (int i = 1; i < 3; ++i) {

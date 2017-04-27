@@ -26,13 +26,12 @@ import org.apache.gossip.model.ShutdownMessage;
 public class ShutdownMessageHandler implements MessageHandler {
   
   /**
-   * @param gossipCore context.
    * @param gossipManager context.
    * @param base message reference.
    * @return boolean indicating success.
    */
   @Override
-  public boolean invoke(GossipCore gossipCore, GossipManager gossipManager, Base base) {
+  public boolean invoke(GossipManager gossipManager, Base base) {
     ShutdownMessage s = (ShutdownMessage) base;
     PerNodeDataMessage m = new PerNodeDataMessage();
     m.setKey(ShutdownMessage.PER_NODE_KEY);
@@ -40,7 +39,7 @@ public class ShutdownMessageHandler implements MessageHandler {
     m.setPayload(base);
     m.setTimestamp(System.currentTimeMillis());
     m.setExpireAt(System.currentTimeMillis() + 30L * 1000L);
-    gossipCore.addPerNodeData(m);
+    gossipManager.getState().addPerNodeData(m);
     return true;
   }
 }

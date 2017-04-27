@@ -17,7 +17,6 @@
  */
 package org.apache.gossip.manager.handlers;
 
-import org.apache.gossip.manager.GossipCore;
 import org.apache.gossip.manager.GossipManager;
 import org.apache.gossip.model.Base;
 
@@ -34,15 +33,14 @@ public class TypedMessageHandler implements MessageHandler {
   }
 
   /**
-   * @param gossipCore context.
    * @param gossipManager context.
    * @param base message reference.
    * @return true if types match, false otherwise.
    */
   @Override
-  public boolean invoke(GossipCore gossipCore, GossipManager gossipManager, Base base) {
+  public boolean invoke(GossipManager gossipManager, Base base) {
     if (messageClass.isAssignableFrom(base.getClass())) {
-      messageHandler.invoke(gossipCore, gossipManager, base);
+      messageHandler.invoke(gossipManager, base);
       return true;
     } else {
       return false;

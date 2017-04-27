@@ -48,9 +48,9 @@ public class MessageHandlerFactory {
     }
     return new MessageHandler() {
       @Override
-      public boolean invoke(GossipCore gossipCore, GossipManager gossipManager, Base base) {
+      public boolean invoke(GossipManager gossipManager, Base base) {
         // return true if at least one of the component handlers return true.
-        return Arrays.asList(handlers).stream().filter((mi) -> mi.invoke(gossipCore, gossipManager, base)).count() > 0;
+        return Arrays.asList(handlers).stream().filter((mi) -> mi.invoke(gossipManager, base)).count() > 0;
       }
     };
   }

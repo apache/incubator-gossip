@@ -17,6 +17,7 @@
  */
 package org.apache.gossip.transport.udp;
 
+import org.apache.gossip.manager.ClusterModel;
 import org.apache.gossip.manager.GossipCore;
 import org.apache.gossip.manager.GossipManager;
 import org.apache.gossip.transport.AbstractTransportManager;
@@ -45,8 +46,8 @@ public class UdpTransportManager extends AbstractTransportManager {
   private final int soTimeout;
   
   /** required for reflection to work! */
-  public UdpTransportManager(GossipManager gossipManager, GossipCore gossipCore) {
-    super(gossipManager, gossipCore);
+  public UdpTransportManager(ClusterModel gossipManager) {
+    super(gossipManager);
     
     soTimeout = gossipManager.getSettings().getGossipInterval() * 2;
     

@@ -48,11 +48,14 @@ public class GossipManagerBuilderTest {
   
   @BeforeEach
   public void setup() throws Exception {
+    GossipSettings settings = new GossipSettings();
+    settings.setTransportManagerClass("org.apache.gossip.transport.UnitTestTransportManager");
+    settings.setProtocolManagerClass("org.apache.gossip.protocol.UnitTestProtocolManager");
     builder = GossipManagerBuilder.newBuilder()
         .id("id")
         .cluster("aCluster")
         .uri(new URI("udp://localhost:2000"))
-        .gossipSettings(new GossipSettings());
+        .gossipSettings(settings);
   }
   
   @Test

@@ -48,8 +48,8 @@ public class DataReaperTest {
     gm.gossipPerNodeData(perNodeDatum(key, value));
     gm.gossipSharedData(sharedDatum(key, value));
     assertDataIsAtCorrectValue(gm);
-    gm.getDataReaper().runPerNodeOnce();
-    gm.getDataReaper().runSharedOnce();
+    gm.getState().removeExpiredPerNodeData(gm.currentTimeMillis());
+    gm.getState().removeExpiredSharedData(gm.currentTimeMillis());
     assertDataIsRemoved(gm);
     gm.shutdown();
   }

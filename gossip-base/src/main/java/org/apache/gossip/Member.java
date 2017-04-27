@@ -19,13 +19,14 @@ package org.apache.gossip;
 
 import java.net.InetSocketAddress;
 import java.net.URI;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
- * A abstract class representing a gossip member.
+ * A class representing a gossip member.
  * 
  */
-public abstract class Member implements Comparable<Member> {
+public class Member implements Comparable<Member> {
 
   
   protected URI uri;
@@ -62,6 +63,11 @@ public abstract class Member implements Comparable<Member> {
     this.heartbeat = heartbeat;
     this.uri = uri;
     this.properties = properties;
+  }
+  
+  /** Another constructor. same as above but supplies time from clock and emtpy property map */
+  public Member(String clusterName, URI uri, String id) {
+    this(clusterName, uri, id, System.nanoTime(), new HashMap<String,String>());
   }
 
   protected Member(){}

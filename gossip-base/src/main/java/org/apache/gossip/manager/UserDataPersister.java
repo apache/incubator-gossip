@@ -21,6 +21,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -45,16 +47,16 @@ public class UserDataPersister implements Runnable {
   }
   
   @SuppressWarnings("unchecked")
-  ConcurrentHashMap<String, ConcurrentHashMap<String, PerNodeDataMessage>> readPerNodeFromDisk(){
+  Collection<PerNodeDataMessage> readPerNodeFromDisk(){
     if (!perNodePath.exists()) {
-      return new ConcurrentHashMap<String, ConcurrentHashMap<String, PerNodeDataMessage>>();
+      return new ArrayList<>();
     }
     try (FileInputStream fos = new FileInputStream(perNodePath)){
-      return objectMapper.readValue(fos, ConcurrentHashMap.class);
+      return objectMapper.readValue(fos, ArrayList.class);
     } catch (IOException e) {
       LOGGER.debug(e);
     }
-    return new ConcurrentHashMap<String, ConcurrentHashMap<String, PerNodeDataMessage>>();
+    return new ArrayList<>();
   }
   
   void writePerNodeToDisk(){
@@ -74,16 +76,16 @@ public class UserDataPersister implements Runnable {
   }
 
   @SuppressWarnings("unchecked")
-  ConcurrentHashMap<String, SharedDataMessage> readSharedDataFromDisk(){
+  Collection<SharedDataMessage> readSharedDataFromDisk(){
     if (!sharedPath.exists()) {
-      return new ConcurrentHashMap<>();
+      return new ArrayList<>();
     }
     try (FileInputStream fos = new FileInputStream(sharedPath)){
-      return objectMapper.readValue(fos, ConcurrentHashMap.class);
+      return objectMapper.readValue(fos, ArrayList.class);
     } catch (IOException e) {
       LOGGER.debug(e);
     }
-    return new ConcurrentHashMap<String, SharedDataMessage>();
+    return new ArrayList<>();
   }
   
   /**

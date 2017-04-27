@@ -23,9 +23,6 @@ import java.net.URI;
 /** interface for manage that sends and receives messages that have already been serialized. */
 public interface TransportManager {
   
-  /** starts the active gossip thread responsible for reaching out to remote nodes. Not related to `startEndpoint()` */
-  void startActiveGossiper();
-  
   /** starts the passive gossip thread that receives messages from remote nodes. Not related to `startActiveGossiper()` */
   void startEndpoint();
   
@@ -34,6 +31,9 @@ public interface TransportManager {
   
   /** sends a payload to an endpoint. */
   void send(URI endpoint, byte[] buf) throws IOException;
+  
+  /** register interest in unmarshaled messages that are received. */
+  void addBytesListener(BytesListener bl);
   
   /** gets the next payload being sent to this node */
   byte[] read() throws IOException;

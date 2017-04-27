@@ -17,11 +17,16 @@
  */
 package org.apache.gossip.manager;
 
-import java.util.Map.Entry;
 import java.util.List;
 import java.util.Random;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.MetricRegistry;
 import org.apache.gossip.LocalMember;
@@ -39,44 +44,72 @@ import org.apache.log4j.Logger;
 import static com.codahale.metrics.MetricRegistry.name;
 
 /**
- * The ActiveGossipThread is sends information. Pick a random partner and send the membership list to that partner
+ * The ActiveGossipper sends information. You can use gossip strategy instances to control how gossip happens.
  */
-public abstract class AbstractActiveGossiper {
+public class ActiveGossiper {
 
-  protected static final Logger LOGGER = Logger.getLogger(AbstractActiveGossiper.class);
+  protected static final Logger LOGGER = Logger.getLogger(ActiveGossiper.class);
   
-  protected final GossipManager gossipManager;
-  protected final GossipCore gossipCore;
+  
+  private final ClusterModel gossipManager;
+  private final MessagingManager messagingManager;
   private final Histogram sharedDataHistogram;
   private final Histogram sendPerNodeDataHistogram;
   private final Histogram sendMembershipHistorgram;
-  private final Random random;
+  private static final Random random = new Random(System.nanoTime());
+  
+  private final ScheduledExecutorService scheduledExecutorService;
+  private final BlockingQueue<Runnable> workQueue;
+  private final ThreadPoolExecutor threadService;
 
-  public AbstractActiveGossiper(GossipManager gossipManager, GossipCore gossipCore, MetricRegistry registry) {
+  public ActiveGossiper(ClusterModel gossipManager, MessagingManager messagingManager, MetricRegistry registry) {
     this.gossipManager = gossipManager;
-    this.gossipCore = gossipCore;
-    sharedDataHistogram = registry.histogram(name(AbstractActiveGossiper.class, "sharedDataHistogram-time"));
-    sendPerNodeDataHistogram = registry.histogram(name(AbstractActiveGossiper.class, "sendPerNodeDataHistogram-time"));
-    sendMembershipHistorgram = registry.histogram(name(AbstractActiveGossiper.class, "sendMembershipHistorgram-time"));
-    random = new Random();
-  }
-
-  public void init() {
-
+    this.messagingManager = messagingManager;
+    sharedDataHistogram = registry.histogram(name(ActiveGossiper.class, "sharedDataHistogram-time"));
+    sendPerNodeDataHistogram = registry.histogram(name(ActiveGossiper.class, "sendPerNodeDataHistogram-time"));
+    sendMembershipHistorgram = registry.histogram(name(ActiveGossiper.class, "sendMembershipHistorgram-time"));
+    scheduledExecutorService = Executors.newScheduledThreadPool(2);
+    workQueue = new ArrayBlockingQueue<Runnable>(1024);
+    threadService = new ThreadPoolExecutor(1, 30, 1, TimeUnit.SECONDS, workQueue,
+            new ThreadPoolExecutor.DiscardOldestPolicy());
   }
   
-  public void shutdown() {
-
+  public void schedule(Runnable r, long periodMillis) {
+    scheduledExecutorService.scheduleAtFixedRate(() ->
+        threadService.execute(r),
+        0, periodMillis, TimeUnit.MILLISECONDS
+    );
   }
 
-  public final void sendShutdownMessage(LocalMember me, LocalMember target){
+  public void shutdown() {
+    scheduledExecutorService.shutdown();
+    try {
+      scheduledExecutorService.awaitTermination(5, TimeUnit.SECONDS);
+    } catch (InterruptedException e) {
+      LOGGER.debug("Issue during shutdown", e);
+    }
+    List<LocalMember> l = gossipManager.getLiveMembers();
+    // sends an optimistic shutdown message to several clusters nodes
+    int sendTo = l.size() < 3 ? 1 : l.size() / 3;
+    for (int i = 0; i < sendTo; i++) {
+      threadService.execute(() -> sendShutdownMessage(gossipManager.getMyself(), messagingManager.getNanoTime(), selectPartner(l)));
+    }
+    threadService.shutdown();
+    try {
+      threadService.awaitTermination(5, TimeUnit.SECONDS);
+    } catch (InterruptedException e) {
+      LOGGER.debug("Issue during shutdown", e);
+    }
+  }
+
+  private void sendShutdownMessage(LocalMember me, long when, LocalMember target){
     if (target == null){
       return;
     }
     ShutdownMessage m = new ShutdownMessage();
     m.setNodeId(me.getId());
-    m.setShutdownAtNanos(gossipManager.getClock().nanoTime());
-    gossipCore.sendOneWay(m, target.getUri());
+    m.setShutdownAtNanos(when);
+    messagingManager.sendOneWay(m, target.getUri());
   }
   
   public final void sendSharedData(LocalMember me, LocalMember member){
@@ -84,16 +117,16 @@ public abstract class AbstractActiveGossiper {
       return;
     }
     long startTime = System.currentTimeMillis();
-    for (Entry<String, SharedDataMessage> innerEntry : gossipCore.getSharedData().entrySet()){
+    for (SharedDataMessage innerEntry : gossipManager.getSharedData()) {
       UdpSharedDataMessage message = new UdpSharedDataMessage();
       message.setUuid(UUID.randomUUID().toString());
       message.setUriFrom(me.getId());
-      message.setExpireAt(innerEntry.getValue().getExpireAt());
-      message.setKey(innerEntry.getValue().getKey());
-      message.setNodeId(innerEntry.getValue().getNodeId());
-      message.setTimestamp(innerEntry.getValue().getTimestamp());
-      message.setPayload(innerEntry.getValue().getPayload());
-      gossipCore.sendOneWay(message, member.getUri());
+      message.setExpireAt(innerEntry.getExpireAt());
+      message.setKey(innerEntry.getKey());
+      message.setNodeId(innerEntry.getNodeId());
+      message.setTimestamp(innerEntry.getTimestamp());
+      message.setPayload(innerEntry.getPayload());
+      messagingManager.sendOneWay(message, member.getUri());
     }
     sharedDataHistogram.update(System.currentTimeMillis() - startTime);
   }
@@ -103,18 +136,16 @@ public abstract class AbstractActiveGossiper {
       return;
     }
     long startTime = System.currentTimeMillis();
-    for (Entry<String, ConcurrentHashMap<String, PerNodeDataMessage>> entry : gossipCore.getPerNodeData().entrySet()){
-      for (Entry<String, PerNodeDataMessage> innerEntry : entry.getValue().entrySet()){
-        UdpPerNodeDataMessage message = new UdpPerNodeDataMessage();
-        message.setUuid(UUID.randomUUID().toString());
-        message.setUriFrom(me.getId());
-        message.setExpireAt(innerEntry.getValue().getExpireAt());
-        message.setKey(innerEntry.getValue().getKey());
-        message.setNodeId(innerEntry.getValue().getNodeId());
-        message.setTimestamp(innerEntry.getValue().getTimestamp());
-        message.setPayload(innerEntry.getValue().getPayload());
-        gossipCore.sendOneWay(message, member.getUri());   
-      }
+    for (PerNodeDataMessage innerEntry : gossipManager.getPerNodeData()) {
+      UdpPerNodeDataMessage message = new UdpPerNodeDataMessage();
+      message.setUuid(UUID.randomUUID().toString());
+      message.setUriFrom(me.getId());
+      message.setExpireAt(innerEntry.getExpireAt());
+      message.setKey(innerEntry.getKey());
+      message.setNodeId(innerEntry.getNodeId());
+      message.setTimestamp(innerEntry.getTimestamp());
+      message.setPayload(innerEntry.getPayload());
+      messagingManager.sendOneWay(message, member.getUri());
     }
     sendPerNodeDataHistogram.update(System.currentTimeMillis() - startTime);
   }
@@ -135,7 +166,7 @@ public abstract class AbstractActiveGossiper {
     for (LocalMember other : gossipManager.getMembers().keySet()) {
       message.getMembers().add(convert(other));
     }
-    Response r = gossipCore.send(message, member.getUri());
+    Response r = messagingManager.send(message, member.getUri());
     if (r instanceof ActiveGossipOk){
       //maybe count metrics here
     } else {
@@ -144,7 +175,7 @@ public abstract class AbstractActiveGossiper {
     sendMembershipHistorgram.update(System.currentTimeMillis() - startTime);
   }
     
-  protected final Member convert(LocalMember member){
+  private static Member convert(LocalMember member){
     Member gm = new Member();
     gm.setCluster(member.getClusterName());
     gm.setHeartbeat(member.getHeartbeat());
@@ -160,7 +191,7 @@ public abstract class AbstractActiveGossiper {
    *          An immutable list
    * @return The chosen LocalGossipMember to gossip with.
    */
-  protected LocalMember selectPartner(List<LocalMember> memberList) {
+  public static LocalMember selectPartner(List<LocalMember> memberList) {
     LocalMember member = null;
     if (memberList.size() > 0) {
       int randomNeighborIndex = random.nextInt(memberList.size());

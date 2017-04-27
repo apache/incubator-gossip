@@ -15,33 +15,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.gossip;
+package org.apache.gossip.manager;
 
-import java.net.URI;
-import java.util.HashMap;
+import org.apache.gossip.GossipSettings;
+import org.apache.gossip.LocalMember;
+import org.apache.gossip.event.GossipState;
+import org.apache.gossip.model.PerNodeDataMessage;
+import org.apache.gossip.model.SharedDataMessage;
+
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
-/**
- * The object represents a gossip member with the properties as received from a remote gossip
- * member.
- * 
- */
-public class RemoteMember extends Member {
-
-  /**
-   * Constructor.
-   * 
-   * @param uri
-   *          A URI object containing IP/hostname and port
-   * @param heartbeat
-   *          The current heartbeat
-   */
-  public RemoteMember(String clusterName, URI uri, String id, long heartbeat, Map<String,String> properties) {
-    super(clusterName, uri, id, heartbeat, properties);
-  }
-
-  public RemoteMember(String clusterName, URI uri, String id) {
-    super(clusterName, uri, id, System.nanoTime(), new HashMap<String,String>());
-  }
-
+/** The main intent of this class is to limit the exposure of its primary implemenation (GossipManager). */
+public interface ClusterModel {
+  Map<LocalMember, GossipState> getMembers();
+  List<LocalMember> getLiveMembers();
+  List<LocalMember> getDeadMembers();
+  Collection<SharedDataMessage> getSharedData();      // ActiveGossiper
+  Collection<PerNodeDataMessage> getPerNodeData();    // ActiveGossiper
+  LocalMember getMyself();
+  GossipSettings getSettings();
+  long nanoTime();
+  long currentTimeMillis();
 }

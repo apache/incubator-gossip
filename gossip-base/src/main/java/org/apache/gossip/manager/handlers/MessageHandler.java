@@ -23,10 +23,9 @@ import org.apache.gossip.model.Base;
 
 public interface MessageHandler {
   /**
-   * @param gossipCore context.
    * @param gossipManager context.
    * @param base message reference.
    * @return boolean indicating success.
    */
-  boolean invoke(GossipCore gossipCore, GossipManager gossipManager, Base base);
+  boolean invoke(GossipManager gossipManager, Base base);
 }

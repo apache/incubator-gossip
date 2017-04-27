@@ -23,7 +23,7 @@ import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.util.Arrays;
 import org.apache.gossip.GossipSettings;
-import org.apache.gossip.RemoteMember;
+import org.apache.gossip.Member;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -32,6 +32,8 @@ public class RingPersistenceTest {
   @Test
   public void givenThatRingIsPersisted() throws UnknownHostException, InterruptedException, URISyntaxException {
     GossipSettings settings = new GossipSettings();
+    settings.setTransportManagerClass("org.apache.gossip.transport.UnitTestTransportManager");
+    settings.setProtocolManagerClass("org.apache.gossip.protocol.UnitTestProtocolManager");
     File f = aGossiperPersists(settings);
     Assert.assertTrue(f.exists());
     aNewInstanceGetsRingInfo(settings);
@@ -46,8 +48,8 @@ public class RingPersistenceTest {
             .gossipSettings(settings)
             .gossipMembers(
                     Arrays.asList(
-                            new RemoteMember("a", new URI("udp://" + "127.0.0.1" + ":" + (29000 + 0)), "0"),
-                            new RemoteMember("a", new URI("udp://" + "127.0.0.1" + ":" + (29000 + 2)), "2"))).build();
+                            new Member("a", new URI("udp://" + "127.0.0.1" + ":" + (29000 + 0)), "0"),
+                            new Member("a", new URI("udp://" + "127.0.0.1" + ":" + (29000 + 2)), "2"))).build();
     gossipService.getRingState().writeToDisk();
     return GossipManager.buildRingStatePath(gossipService);
   }

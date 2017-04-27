@@ -18,8 +18,7 @@
 
 package org.apache.gossip.transport;
 
-import org.apache.gossip.manager.GossipCore;
-import org.apache.gossip.manager.GossipManager;
+import org.apache.gossip.manager.ClusterModel;
 
 import java.io.IOException;
 import java.net.URI;
@@ -36,8 +35,8 @@ public class UnitTestTransportManager extends AbstractTransportManager {
   private final URI localEndpoint;
   private BlockingQueue<byte[]> buffers = new ArrayBlockingQueue<byte[]>(1000);
   
-  public UnitTestTransportManager(GossipManager gossipManager, GossipCore gossipCore) {
-    super(gossipManager, gossipCore);
+  public UnitTestTransportManager(ClusterModel gossipManager) {
+    super(gossipManager);
     localEndpoint = gossipManager.getMyself().getUri();
   }
 

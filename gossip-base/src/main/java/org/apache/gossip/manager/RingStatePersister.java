@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.NavigableSet;
+import java.util.Set;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -38,9 +39,9 @@ public class RingStatePersister implements Runnable {
   private final File path;
   // NOTE: this is a different instance than what gets used for message marshalling.
   private final ObjectMapper objectMapper;
-  private final GossipManager manager;
+  private final ClusterModel manager;
   
-  public RingStatePersister(File path, GossipManager manager){
+  public RingStatePersister(File path, ClusterModel manager){
     this.path = path;
     this.objectMapper = GossipManager.metdataObjectMapper;
     this.manager = manager;
@@ -52,7 +53,7 @@ public class RingStatePersister implements Runnable {
   }
   
   void writeToDisk() {
-    NavigableSet<LocalMember> i = manager.getMembers().keySet();
+    Set<LocalMember> i = manager.getMembers().keySet();
     try (FileOutputStream fos = new FileOutputStream(path)){
       objectMapper.writeValue(fos, i);
     } catch (IOException e) {
