@@ -149,4 +149,10 @@ public class LWWSet<ElementType> implements CrdtSet<ElementType, Set<ElementType
   public boolean equals(Object obj){
     return this == obj || (obj != null && getClass() == obj.getClass() && value().equals(((LWWSet) obj).value()));
   }
+
+  @Override
+  public String toString() {
+    return "LWWSet [struct=" + struct + "]";
+  }  
+  
 }

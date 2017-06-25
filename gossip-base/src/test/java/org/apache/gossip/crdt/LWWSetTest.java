@@ -134,14 +134,15 @@ public class LWWSetTest {
     // try to create LWWSet with time from future (simulate other process with its own clock) and validate result
     // check remove from the future
     Map<Integer, LWWSet.Timestamps> map = new HashMap<>();
-    map.put(25, new LWWSet.Timestamps(clock.nanoTime(), clock.nanoTime() + 100000));
+    long nano = clock.nanoTime();
+    map.put(25, new LWWSet.Timestamps(nano, nano + 100000));
     LWWSet<Integer> lww = new LWWSet<>(map);
     Assert.assertEquals(lww, new LWWSet<Integer>());
     //create new LWWSet with element 25, and merge with other LWW which has remove in future
-    Assert.assertEquals(new LWWSet<>(25).merge(lww), new LWWSet<Integer>());
+    Assert.assertEquals(new LWWSet<>(25).merge(lww).value(), new LWWSet<Integer>().value());
 
     // add in future
-    map.put(25, new LWWSet.Timestamps(clock.nanoTime() + 100000, 0));
+    map.put(25, new LWWSet.Timestamps(nano + 100000 + 100000, 0));
     lww = new LWWSet<>(map);
     lww = lww.remove(25);
     Assert.assertEquals(lww, new LWWSet<>(25)); // 25 is still here
@@ -153,3 +154,4 @@ public class LWWSetTest {
     Assert.assertEquals(new LWWSet<>(sampleSet).optimize().value(), sampleSet);
   }
 }
+//LWWSetTest.
