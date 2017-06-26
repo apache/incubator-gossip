@@ -23,6 +23,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.gossip.GossipSettings;
 import org.apache.gossip.Member;
 import org.apache.gossip.crdt.LWWSet;
+import org.apache.gossip.crdt.MaxChangeSet;
 import org.apache.gossip.crdt.OrSet;
 import org.apache.gossip.manager.GossipManager;
 import org.apache.gossip.manager.GossipManagerBuilder;
@@ -39,7 +40,7 @@ import java.util.List;
 import java.util.UUID;
 
 public class JacksonTest {
-  
+
   private static GossipSettings simpleSettings(GossipSettings settings) {
     settings.setPersistRingState(false);
     settings.setPersistDataState(false);
@@ -47,12 +48,12 @@ public class JacksonTest {
     settings.setProtocolManagerClass("org.apache.gossip.protocol.json.JacksonProtocolManager");
     return settings;
   }
-  
+
   private static GossipSettings withSigning(GossipSettings settings) {
     settings.setSignMessages(true);
     return settings;
   }
-  
+
   // formerly of SignedMessageTest.
   @Test(expected = IllegalArgumentException.class)
   public void ifSignMustHaveKeys()
@@ -70,11 +71,11 @@ public class JacksonTest {
             .build();
     gossipService.init();
   }
-  
+
   @Test
   public void jacksonSerialTest() throws InterruptedException, URISyntaxException, IOException {
     ObjectMapper objectMapper = JacksonProtocolManager.buildObjectMapper(simpleSettings(new GossipSettings()));
-    
+
     OrSet<Integer> i = new OrSet<Integer>(new OrSet.Builder<Integer>().add(1).remove(1));
     String s = objectMapper.writeValueAsString(i);
     @SuppressWarnings("unchecked")
@@ -82,38 +83,50 @@ public class JacksonTest {
     Assert.assertEquals(back, i);
   }
 
-  @Test
-  public void jacksonCrdtLWWSetTest() {
+  void jacksonCrdtSeDeTest(Object value, Class<?> cl){
     ObjectMapper objectMapper = JacksonProtocolManager.buildObjectMapper(simpleSettings(new GossipSettings()));
 
-    LWWSet<String> lww = new LWWSet<>("a", "b", "c");
-
     try {
-      String lwwS = objectMapper.writeValueAsString(lww);
+      String valueS = objectMapper.writeValueAsString(value);
       @SuppressWarnings("unchecked")
-      LWWSet<String> parsedLww = objectMapper.readValue(lwwS, LWWSet.class);
-      Assert.assertEquals(lww, parsedLww);
+      Object parsedValue = objectMapper.readValue(valueS, cl);
+      Assert.assertEquals(value, parsedValue);
     } catch (Exception e) {
-      Assert.fail("LWWSet se/de error");
+      Assert.fail("Jackson se/de error");
     }
   }
-  
+
+  @Test
+  public void jacksonOrSetTest(){
+    jacksonCrdtSeDeTest(new OrSet<>("1", "2", "3"), OrSet.class);
+  }
+
+  @Test
+  public void jacksonLWWSetTest(){
+    jacksonCrdtSeDeTest(new LWWSet<>("1", "2", "3"), LWWSet.class);
+  }
+
+  @Test
+  public void jacksonMaxChangeSetTest(){
+    jacksonCrdtSeDeTest(new MaxChangeSet<>("1", "2", "3"), MaxChangeSet.class);
+  }
+
   @Test
   public void testMessageEqualityAssumptions() {
     long timeA = System.nanoTime();
     long timeB = System.nanoTime();
     Assert.assertNotEquals(timeA, timeB);
-    
+
     TestMessage messageA0 = new TestMessage(Long.toHexString(timeA));
     TestMessage messageA1 = new TestMessage(Long.toHexString(timeA));
     TestMessage messageB = new TestMessage(Long.toHexString(timeB));
-    
+
     Assert.assertEquals(messageA0, messageA1);
     Assert.assertFalse(messageA0 == messageA1);
     Assert.assertNotEquals(messageA0, messageB);
     Assert.assertNotEquals(messageA1, messageB);
   }
-  
+
   // ideally, we would test the serializability of every message type, but we just want to make sure this works in
   // basic cases.
   @Test

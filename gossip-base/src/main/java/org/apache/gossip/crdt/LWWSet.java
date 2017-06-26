@@ -20,12 +20,31 @@ package org.apache.gossip.crdt;
 import org.apache.gossip.manager.Clock;
 import org.apache.gossip.manager.SystemClock;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class LWWSet<ElementType> implements CrdtSet<ElementType, Set<ElementType>, LWWSet<ElementType>> {
+/*
+  Last write wins CrdtSet
+  Each operation has timestamp: when you add or remove SystemClock is used to get current time in nanoseconds.
+  When all add/remove operations are within the only node LWWSet is guaranteed to work like a Set.
+  If you have multiple nodes with ideally synchronized clocks:
+    You will observe operations on all machines later than on the initiator, but the last operations on cluster will win.
+  If you have some significant clock drift you will suffer from data loss.
+
+  Read more: https://github.com/aphyr/meangirls#lww-element-set
+
+  You can view examples of usage in tests:
+  LWWSetTest - unit tests
+  DataTest - integration test with 2 nodes, LWWSet was serialized/deserialized, sent between nodes, merged
+*/
+
+public class LWWSet<ElementType> implements CrdtAddRemoveSet<ElementType, Set<ElementType>, LWWSet<ElementType>> {
   static private Clock clock = new SystemClock();
 
   private final Map<ElementType, Timestamps> struct;
@@ -44,11 +63,11 @@ public class LWWSet<ElementType> implements CrdtSet<ElementType, Set<ElementType
       latestRemove = remove;
     }
 
-    long getLatestAdd() {
+    long getLatestAdd(){
       return latestAdd;
     }
 
-    long getLatestRemove() {
+    long getLatestRemove(){
       return latestRemove;
     }
 
@@ -112,7 +131,7 @@ public class LWWSet<ElementType> implements CrdtSet<ElementType, Set<ElementType
     this.struct = struct;
   }
 
-  Map<ElementType, Timestamps> getStruct() {
+  Map<ElementType, Timestamps> getStruct(){
     return struct;
   }
 
