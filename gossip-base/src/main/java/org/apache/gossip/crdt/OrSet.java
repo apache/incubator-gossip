@@ -26,7 +26,7 @@ import org.apache.gossip.crdt.OrSet.Builder.Operation;
 /*
  * A immutable set 
  */
-public class OrSet<E>  implements Crdt<Set<E>, OrSet<E>> {
+public class OrSet<E>  implements CrdtAddRemoveSet<E, Set<E>, OrSet<E>> {
   
   private final Map<E, Set<UUID>> elements = new HashMap<>();
   private final Map<E, Set<UUID>> tombstones = new HashMap<>();
@@ -44,6 +44,10 @@ public class OrSet<E>  implements Crdt<Set<E>, OrSet<E>> {
   
   @SafeVarargs
   public OrSet(E ... elements){
+    this(new HashSet<>(Arrays.asList(elements)));
+  }
+
+  public OrSet(Set<E> elements) {
     for (E e: elements){
       internalAdd(e);
     }
@@ -109,7 +113,15 @@ public class OrSet<E>  implements Crdt<Set<E>, OrSet<E>> {
 
     val = computeValue();
   }
-  
+
+  public OrSet<E> add(E e) {
+    return this.merge(new OrSet<>(e));
+  }
+
+  public OrSet<E> remove(E e) {
+    return new OrSet<>(this, new Builder<E>().remove(e));
+  }
+
   public OrSet.Builder<E> builder(){
     return new OrSet.Builder<>();
   }
@@ -231,15 +243,6 @@ public class OrSet<E>  implements Crdt<Set<E>, OrSet<E>> {
 
   public <T> T[] toArray(T[] a) {
     return value().toArray(a);
-  }
-
-  public boolean add(E e) {
-    throw new IllegalArgumentException("Can not add");
-  }
-
-
-  public boolean remove(Object o) {
-    throw new IllegalArgumentException();
   }
 
   public boolean containsAll(Collection<?> c) {
