@@ -17,37 +17,26 @@
  */
 package org.apache.gossip.examples;
 
-import java.net.URI;
-import java.net.UnknownHostException;
-import java.util.Arrays;
-import org.apache.gossip.GossipSettings;
-import org.apache.gossip.RemoteMember;
+import java.io.IOException;
+
 import org.apache.gossip.manager.GossipManager;
-import org.apache.gossip.manager.GossipManagerBuilder;
 
-public class StandAloneNode {
+public class StandAloneNode extends StandAloneExampleBase {
 
-  private static ExampleCommon common = new ExampleCommon();
+  private static boolean WILL_READ = false;
 
-  public static void main(String[] args) throws UnknownHostException, InterruptedException {
-    args = common.checkArgsForClearFlag(args);
-    GossipSettings s = new GossipSettings();
-    s.setWindowSize(1000);
-    s.setGossipInterval(100);
-    GossipManager gossipService = GossipManagerBuilder.newBuilder().cluster("mycluster")
-            .uri(URI.create(args[0]))
-            .id(args[1])
-            .gossipMembers(
-                    Arrays.asList(new RemoteMember("mycluster", URI.create(args[2]), args[3])))
-            .gossipSettings(s)
-            .build();
-    gossipService.init();
-    while (true) {
-      common.optionallyClearTerminal();
-      System.out.println("Live: " + gossipService.getLiveMembers());
-      System.out.println("Dead: " + gossipService.getDeadMembers());
-      Thread.sleep(2000);
-    }
+  public static void main(String[] args) throws InterruptedException, IOException {
+    StandAloneNode example = new StandAloneNode(args);
+    example.exec(WILL_READ);
+  }
+
+  StandAloneNode(String[] args) {
+    args = super.checkArgsForClearFlag(args);
+    super.initGossipManager(args);
+  }
+
+  @Override
+  void printValues(GossipManager gossipService) {
   }
 
 }

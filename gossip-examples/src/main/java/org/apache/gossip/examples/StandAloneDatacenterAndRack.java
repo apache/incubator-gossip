@@ -18,8 +18,8 @@
 
 package org.apache.gossip.examples;
 
+import java.io.IOException;
 import java.net.URI;
-import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -30,12 +30,20 @@ import org.apache.gossip.manager.DatacenterRackAwareActiveGossiper;
 import org.apache.gossip.manager.GossipManager;
 import org.apache.gossip.manager.GossipManagerBuilder;
 
-public class StandAloneDatacenterAndRack {
+public class StandAloneDatacenterAndRack extends StandAloneExampleBase {
 
-  private static ExampleCommon common = new ExampleCommon();
+  public static void main(String[] args) throws InterruptedException, IOException {
+    StandAloneDatacenterAndRack example = new StandAloneDatacenterAndRack(args);
+    boolean willRead = true;
+    example.exec(willRead);
+  }
 
-  public static void main(String[] args) throws UnknownHostException, InterruptedException {
-    args = common.checkArgsForClearFlag(args);
+  StandAloneDatacenterAndRack(String[] args) {
+    args = super.checkArgsForClearFlag(args);
+    initGossipManager(args);
+  }
+
+  void initGossipManager(String[] args) {
     GossipSettings s = new GossipSettings();
     s.setWindowSize(1000);
     s.setGossipInterval(100);
@@ -48,20 +56,17 @@ public class StandAloneDatacenterAndRack {
     props.put(DatacenterRackAwareActiveGossiper.DATACENTER, args[4]);
     props.put(DatacenterRackAwareActiveGossiper.RACK, args[5]);
     GossipManager manager = GossipManagerBuilder.newBuilder().cluster("mycluster")
-            .uri(URI.create(args[0]))
-            .id(args[1])
-            .gossipSettings(s)
+            .uri(URI.create(args[0])).id(args[1]).gossipSettings(s)
             .gossipMembers(
                     Arrays.asList(new RemoteMember("mycluster", URI.create(args[2]), args[3])))
-            .properties(props)
-            .build();
+            .properties(props).build();
     manager.init();
-    while (true) {
-      common.optionallyClearTerminal();
-      System.out.println("Live: " + manager.getLiveMembers());
-      System.out.println("Dead: " + manager.getDeadMembers());
-      Thread.sleep(2000);
-    }
+    setGossipService(manager);
+  }
+
+  @Override
+  void printValues(GossipManager gossipService) {
+    return;
   }
 
 }
