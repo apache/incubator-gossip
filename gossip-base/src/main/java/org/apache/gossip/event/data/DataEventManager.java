@@ -98,5 +98,4 @@ public class DataEventManager {
   public int getSharedDataSubscribersSize() {
     return sharedDataHandlers.size();
   }
-  
 }

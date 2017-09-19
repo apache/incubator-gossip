@@ -36,7 +36,7 @@ public class StandAloneNode extends StandAloneExampleBase {
   }
 
   @Override
-  void printValues(GossipManager gossipService) {
+  protected void printValues(GossipManager gossipService) {
   }
 
 }

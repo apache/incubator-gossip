@@ -18,18 +18,37 @@
 
 package org.apache.gossip.consistency;
 
-import org.apache.gossip.LocalMember;
+import java.util.HashMap;
 
-import java.util.List;
+public class Consistency {
+	private ConsistencyLevel level;
+	private HashMap<String, Object> parameters;
+	
+	public Consistency(ConsistencyLevel level, HashMap<String, Object> params) {
+		this.level = level;
+		this.parameters = params;
+		if(this.parameters == null) {
+			this.parameters = new HashMap<String, Object>();
+		}
+	}
 
-public interface OperationTargets {
-    /**
-     *
-     * @param key
-     * @param me
-     * @param living
-     * @param dead
-     * @return list of targets
-     */
-    List<LocalMember> generateTargets(String key, LocalMember me, List<LocalMember> living, List<LocalMember> dead);
+	public ConsistencyLevel getLevel() {
+		return level;
+	}
+
+	public void setLevel(ConsistencyLevel level) {
+		this.level = level;
+	}
+
+	public HashMap<String, Object> getParameters() {
+		return parameters;
+	}
+
+	public void setParameters(HashMap<String, Object> parameters) {
+		this.parameters = parameters;
+	}
+	
+	public void addParameter(String key, Object value) {
+		this.parameters.put(key, value);
+	}
 }

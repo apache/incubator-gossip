@@ -43,7 +43,7 @@ public class StandAloneDatacenterAndRack extends StandAloneExampleBase {
     initGossipManager(args);
   }
 
-  void initGossipManager(String[] args) {
+  protected void initGossipManager(String[] args) {
     GossipSettings s = new GossipSettings();
     s.setWindowSize(1000);
     s.setGossipInterval(100);
@@ -65,7 +65,7 @@ public class StandAloneDatacenterAndRack extends StandAloneExampleBase {
   }
 
   @Override
-  void printValues(GossipManager gossipService) {
+  protected void printValues(GossipManager gossipService) {
     return;
   }
 

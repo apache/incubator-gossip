@@ -20,19 +20,29 @@ package org.apache.gossip.manager;
 import com.codahale.metrics.MetricRegistry;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import org.apache.gossip.GossipSettings;
 import org.apache.gossip.LocalMember;
 import org.apache.gossip.Member;
+import org.apache.gossip.consistency.Consistency;
+import org.apache.gossip.consistency.OperationTargets;
+import org.apache.gossip.consistency.ResponseMerger;
 import org.apache.gossip.crdt.Crdt;
 import org.apache.gossip.event.GossipListener;
 import org.apache.gossip.event.GossipState;
 import org.apache.gossip.event.data.UpdateNodeDataEventHandler;
 import org.apache.gossip.event.data.UpdateSharedDataEventHandler;
+import org.apache.gossip.manager.handlers.DataReadHandler;
+import org.apache.gossip.manager.handlers.DataWriteHandler;
 import org.apache.gossip.manager.handlers.MessageHandler;
+import org.apache.gossip.model.DataRequestMessage;
 import org.apache.gossip.model.PerNodeDataMessage;
+import org.apache.gossip.model.RequestAction;
+import org.apache.gossip.model.Response;
 import org.apache.gossip.model.SharedDataMessage;
 import org.apache.gossip.protocol.ProtocolManager;
 import org.apache.gossip.transport.TransportManager;
+import org.apache.gossip.udp.UdpDataRequestMessage;
 import org.apache.gossip.utils.ReflectionUtils;
 import org.apache.log4j.Logger;
 
@@ -77,6 +87,9 @@ public abstract class GossipManager {
   private final GossipMemberStateRefresher memberStateRefresher;
   
   private final MessageHandler messageHandler;
+  private final Coordinator coordinator;
+  private DataReadHandler dataReadHandler;
+  private DataWriteHandler dataWriteHandler;
   
   public GossipManager(String cluster,
                        URI uri, String id, Map<String, String> properties, GossipSettings settings,
@@ -90,6 +103,7 @@ public abstract class GossipManager {
             settings.getWindowSize(), settings.getMinimumSamples(), settings.getDistribution());
     gossipCore = new GossipCore(this, registry);
     dataReaper = new DataReaper(gossipCore, clock);
+    coordinator = new Coordinator();
     members = new ConcurrentSkipListMap<>();
     for (Member startupMember : gossipMembers) {
       if (!startupMember.equals(me)) {
@@ -112,6 +126,22 @@ public abstract class GossipManager {
     this.memberStateRefresher = new GossipMemberStateRefresher(members, settings, listener, this::findPerNodeGossipData);
     readSavedRingState();
     readSavedDataState();
+  }
+
+  public DataReadHandler getDataReadHandler() {
+	  return dataReadHandler;
+  }
+  
+  public DataWriteHandler getDataWriteHandler() {
+	  return dataWriteHandler;
+  }
+  
+  public void registerDataReadHandler(DataReadHandler dataReadHandler) {
+	  this.dataReadHandler = dataReadHandler;
+  }
+  
+  public void registerDataWriteHandler(DataWriteHandler dataWriteHandler) {
+	  this.dataWriteHandler = dataWriteHandler;
   }
 
   public MessageHandler getMessageHandler() {
@@ -365,5 +395,25 @@ public abstract class GossipManager {
   
   public void unregisterSharedDataSubscriber(UpdateSharedDataEventHandler handler){
     gossipCore.unregisterSharedDataSubscriber(handler);
+  }
+  
+  public Object read(String key, OperationTargets targets, Consistency con, ResponseMerger merger) {
+	  List<LocalMember> members = targets.generateTargets(key, me, getLiveMembers(), getLiveMembers());
+	  DataRequestMessage readRequestMessage = new DataRequestMessage();
+	  readRequestMessage.setKey(key);
+	  readRequestMessage.setAction(RequestAction.READ);
+	  List<Response> responses = coordinator.coordinateRequest(members, readRequestMessage, con, me, gossipCore, this);
+	  return merger.merge(responses);
+  }
+  
+  public boolean write(String key, Object value, OperationTargets targets, Consistency con, ResponseMerger merger) {
+	  List<LocalMember> members = targets.generateTargets(key, me, getLiveMembers(), getLiveMembers());
+	  UdpDataRequestMessage writeRequestMessage = new UdpDataRequestMessage();
+	  writeRequestMessage.setKey(key);
+	  writeRequestMessage.setValue(value);
+	  writeRequestMessage.setAction(RequestAction.WRITE);
+	  List<Response> responses = coordinator.coordinateRequest(members, writeRequestMessage, con, me, gossipCore, this);
+	  String iswritten = merger.merge(responses).toString();
+	  return Boolean.getBoolean(iswritten);
   }
 }

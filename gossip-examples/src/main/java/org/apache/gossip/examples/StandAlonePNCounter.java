@@ -36,7 +36,7 @@ public class StandAlonePNCounter extends StandAloneExampleBase {
     super.initGossipManager(args);
   }
 
-  void printValues(GossipManager gossipService) {
+  protected void printValues(GossipManager gossipService) {
     System.out.println("Last Input: " + getLastInput());
     System.out.println("---------- " + (gossipService.findCrdt("myPNCounter") == null ? ""
             : gossipService.findCrdt("myPNCounter").value()));

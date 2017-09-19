@@ -16,20 +16,35 @@
  * limitations under the License.
  */
 
-package org.apache.gossip.consistency;
+package org.apache.gossip.udp;
 
-import org.apache.gossip.LocalMember;
+import org.apache.gossip.model.DataResponse;
 
-import java.util.List;
+public class UdpDataResponse extends DataResponse implements Trackable {
 
-public interface OperationTargets {
-    /**
-     *
-     * @param key
-     * @param me
-     * @param living
-     * @param dead
-     * @return list of targets
-     */
-    List<LocalMember> generateTargets(String key, LocalMember me, List<LocalMember> living, List<LocalMember> dead);
+	  private String uriFrom;
+	  private String uuid;
+	  
+	  public String getUriFrom() {
+	    return uriFrom;
+	  }
+	  
+	  public void setUriFrom(String uriFrom) {
+	    this.uriFrom = uriFrom;
+	  }
+	  
+	  public String getUuid() {
+	    return uuid;
+	  }
+	  
+	  public void setUuid(String uuid) {
+	    this.uuid = uuid;
+	  }
+
+	  @Override
+	  public String toString() {
+	    return "UdpDataResponse [uriFrom=" + uriFrom + ", uuid=" + uuid +
+	    		", getKey()=" + getKey() + ", getValue()=" + getValue() +
+	    		", getTimestamp()=" + getTimestamp() + ", getExpireAt()=" + getExpireAt() + "]";
+	  }
 }

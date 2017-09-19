@@ -26,6 +26,7 @@ import org.apache.gossip.model.PerNodeDataMessage;
 import org.apache.gossip.model.Response;
 import org.apache.gossip.model.SharedDataMessage;
 import org.apache.gossip.model.ShutdownMessage;
+import org.apache.gossip.model.DataRequestMessage;
 
 import java.util.Arrays;
 
@@ -37,7 +38,8 @@ public class MessageHandlerFactory {
         new TypedMessageHandler(ShutdownMessage.class, new ShutdownMessageHandler()),
         new TypedMessageHandler(PerNodeDataMessage.class, new PerNodeDataMessageHandler()),
         new TypedMessageHandler(SharedDataMessage.class, new SharedDataMessageHandler()),
-        new TypedMessageHandler(ActiveGossipMessage.class, new ActiveGossipMessageHandler())
+        new TypedMessageHandler(ActiveGossipMessage.class, new ActiveGossipMessageHandler()),
+        new TypedMessageHandler(DataRequestMessage.class, new DataRequestMessageHandler())
     );
   }
   

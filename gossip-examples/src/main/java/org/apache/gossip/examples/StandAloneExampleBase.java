@@ -30,20 +30,20 @@ import org.apache.gossip.RemoteMember;
 import org.apache.gossip.manager.GossipManager;
 import org.apache.gossip.manager.GossipManagerBuilder;
 
-abstract class StandAloneExampleBase {
+public abstract class StandAloneExampleBase {
   private String lastInput = "{none}";
 
   private boolean clearTerminalScreen = true;
 
   private GossipManager gossipService = null;
 
-  abstract void printValues(GossipManager gossipService);
+  abstract protected void printValues(GossipManager gossipService);
 
   boolean processReadLoopInput(String line) {
     return true;
   }
 
-  void exec(boolean willRead) throws IOException {
+  public void exec(boolean willRead) throws IOException {
     gossipService.init();
     startMonitorLoop(gossipService);
     if (willRead) {
@@ -55,7 +55,7 @@ abstract class StandAloneExampleBase {
    * Look for -s in args. If there, suppress terminal-clear on write results: shift args for
    * positional args, if necessary
    */
-  String[] checkArgsForClearFlag(String[] args) {
+  protected String[] checkArgsForClearFlag(String[] args) {
     int pos = 0;
     for (int i = 0; i < args.length; i++) {
       if (args[i].equals("-s")) {
@@ -139,7 +139,7 @@ abstract class StandAloneExampleBase {
     }
   }
 
-  void initGossipManager(String[] args) {
+  protected void initGossipManager(String[] args) {
     GossipSettings s = new GossipSettings();
     s.setWindowSize(1000);
     s.setGossipInterval(100);
@@ -155,7 +155,7 @@ abstract class StandAloneExampleBase {
     this.gossipService = gossipService;
   }
 
-  GossipManager getGossipManager() {
+  protected GossipManager getGossipManager() {
     return this.gossipService;
   }
 

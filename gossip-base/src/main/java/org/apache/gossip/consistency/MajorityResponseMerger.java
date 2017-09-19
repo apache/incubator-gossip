@@ -18,18 +18,29 @@
 
 package org.apache.gossip.consistency;
 
-import org.apache.gossip.LocalMember;
-
+import java.util.HashMap;
 import java.util.List;
 
-public interface OperationTargets {
-    /**
-     *
-     * @param key
-     * @param me
-     * @param living
-     * @param dead
-     * @return list of targets
-     */
-    List<LocalMember> generateTargets(String key, LocalMember me, List<LocalMember> living, List<LocalMember> dead);
+import org.apache.gossip.model.DataResponse;
+import org.apache.gossip.model.Response;
+
+public class MajorityResponseMerger implements ResponseMerger {
+    public Object merge(List<? extends Response> responses) {
+    	HashMap<Object, Integer> responseCount = new HashMap<Object, Integer>();
+    	int majorityCount = 0;
+    	Object majorityResult = null;
+    	for(Response response : responses) {
+    		DataResponse r = (DataResponse) response;
+    		if(responseCount.containsKey(r.getValue())) {
+    			responseCount.put(r.getValue(), responseCount.get(r.getValue()) + 1);
+    		} else {
+    			responseCount.put(r.getValue(), 1);
+    		}
+    		if(majorityCount < responseCount.get(r.getValue())) {
+    			majorityCount = responseCount.get(r.getValue());
+    			majorityResult = r.getValue();
+    		}
+    	}
+    return majorityResult;
+    }
 }

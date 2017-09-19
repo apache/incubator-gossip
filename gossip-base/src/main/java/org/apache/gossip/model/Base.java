@@ -19,6 +19,7 @@ package org.apache.gossip.model;
 
 import org.apache.gossip.udp.UdpActiveGossipMessage;
 import org.apache.gossip.udp.UdpActiveGossipOk;
+import org.apache.gossip.udp.UdpDataRequestMessage;
 import org.apache.gossip.udp.UdpPerNodeDataMessage;
 import org.apache.gossip.udp.UdpNotAMemberFault;
 import org.apache.gossip.udp.UdpSharedDataMessage;
@@ -42,7 +43,9 @@ import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
         @Type(value = PerNodeDataMessage.class, name = "PerNodeDataMessage"),
         @Type(value = UdpPerNodeDataMessage.class, name = "UdpPerNodeDataMessage"),
         @Type(value = SharedDataMessage.class, name = "SharedDataMessage"),
-        @Type(value = UdpSharedDataMessage.class, name = "UdpSharedDataMessage")
+        @Type(value = UdpSharedDataMessage.class, name = "UdpSharedDataMessage"),
+        @Type(value = UdpDataRequestMessage.class, name = "UdpDataRequestMessage"),
+        
         })
 public class Base {
 
