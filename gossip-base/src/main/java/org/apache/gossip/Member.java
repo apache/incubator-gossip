@@ -156,8 +156,8 @@ public abstract class Member implements Comparable<Member> {
       return false;
     }
     // The object is the same of they both have the same address (hostname and port).
-    return computeAddress().equals(((LocalMember) obj).computeAddress())
-            && getClusterName().equals(((LocalMember) obj).getClusterName());
+    return computeAddress().equals(((Member) obj).computeAddress())
+    && getClusterName().equals(((Member) obj).getClusterName());
   }
 
   public int compareTo(Member other) {
