@@ -27,20 +27,11 @@ import org.apache.gossip.lock.vote.Vote;
 import org.apache.gossip.lock.vote.VoteCandidate;
 import org.apache.gossip.manager.GossipManager;
 import org.apache.gossip.model.SharedDataMessage;
+import org.apache.gossip.utils.TimeUtils;
 import org.apache.log4j.Logger;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArraySet;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.*;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -151,7 +142,7 @@ public class LockManager {
     lockMessage.setKey(generateLockKey(key));
     lockMessage.setPayload(majorityVote);
     lockMessage.setExpireAt(Long.MAX_VALUE);
-    lockMessage.setTimestamp(System.currentTimeMillis());
+    lockMessage.setTimestamp(TimeUtils.getClock().currentTimeMillis());
     return lockMessage;
   }
 

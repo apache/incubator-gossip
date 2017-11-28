@@ -22,13 +22,8 @@ import org.apache.gossip.manager.DatacenterRackAwareActiveGossiper;
 import org.apache.gossip.manager.GossipManager;
 import org.apache.gossip.manager.GossipManagerBuilder;
 import org.apache.gossip.model.SharedDataMessage;
-import org.apache.gossip.replication.AllReplicable;
-import org.apache.gossip.replication.BlackListReplicable;
-import org.apache.gossip.replication.DataCenterReplicable;
-import org.apache.gossip.replication.NotReplicable;
-import org.apache.gossip.replication.Replicable;
-import org.apache.gossip.replication.WhiteListReplicable;
-import org.junit.Assert;
+import org.apache.gossip.replication.*;
+import org.apache.gossip.utils.TimeUtils;
 import org.junit.Test;
 import org.junit.platform.runner.JUnitPlatform;
 import org.junit.runner.RunWith;
@@ -36,12 +31,7 @@ import org.junit.runner.RunWith;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 @RunWith(JUnitPlatform.class)
@@ -191,7 +181,7 @@ public class SharedDataReplicationControlTest extends AbstractIntegrationBase {
     g.setExpireAt(Long.MAX_VALUE);
     g.setKey(key);
     g.setPayload(value);
-    g.setTimestamp(System.currentTimeMillis());
+    g.setTimestamp(TimeUtils.getClock().currentTimeMillis());
     g.setReplicable(replicable);
     return g;
   }

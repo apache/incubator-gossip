@@ -18,15 +18,15 @@
 package org.apache.gossip.manager;
 
 import com.codahale.metrics.MetricRegistry;
-import java.net.URI;
-
+import io.teknek.tunit.TUnit;
 import org.apache.gossip.GossipSettings;
 import org.apache.gossip.model.PerNodeDataMessage;
 import org.apache.gossip.model.SharedDataMessage;
+import org.apache.gossip.utils.TimeUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
-import io.teknek.tunit.TUnit;
+import java.net.URI;
 
 public class DataReaperTest {
 
@@ -68,19 +68,19 @@ public class DataReaperTest {
   
   private PerNodeDataMessage perNodeDatum(String key, String value) {
     PerNodeDataMessage m = new PerNodeDataMessage();
-    m.setExpireAt(System.currentTimeMillis() + 5L);
+    m.setExpireAt(TimeUtils.getClock().currentTimeMillis() + 5L);
     m.setKey(key);
     m.setPayload(value);
-    m.setTimestamp(System.currentTimeMillis());
+    m.setTimestamp(new SystemClock().currentTimeMillis());
     return m;
   }
   
   private SharedDataMessage sharedDatum(String key, String value) {
     SharedDataMessage m = new SharedDataMessage();
-    m.setExpireAt(System.currentTimeMillis() + 5L);
+    m.setExpireAt(new SystemClock().currentTimeMillis() + 5L);
     m.setKey(key);
     m.setPayload(value);
-    m.setTimestamp(System.currentTimeMillis());
+    m.setTimestamp(TimeUtils.getClock().currentTimeMillis());
     return m;
   }
   

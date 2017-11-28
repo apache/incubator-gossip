@@ -18,18 +18,12 @@
 package org.apache.gossip;
 
 import io.teknek.tunit.TUnit;
-import org.apache.gossip.crdt.CrdtAddRemoveSet;
-import org.apache.gossip.crdt.GrowOnlyCounter;
-import org.apache.gossip.crdt.GrowOnlySet;
-import org.apache.gossip.crdt.LwwSet;
-import org.apache.gossip.crdt.MaxChangeSet;
-import org.apache.gossip.crdt.OrSet;
-import org.apache.gossip.crdt.PNCounter;
-import org.apache.gossip.crdt.TwoPhaseSet;
+import org.apache.gossip.crdt.*;
 import org.apache.gossip.manager.GossipManager;
 import org.apache.gossip.manager.GossipManagerBuilder;
 import org.apache.gossip.model.PerNodeDataMessage;
 import org.apache.gossip.model.SharedDataMessage;
+import org.apache.gossip.utils.TimeUtils;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -37,12 +31,7 @@ import org.junit.Test;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -231,7 +220,7 @@ public class DataTest {
     g.setExpireAt(Long.MAX_VALUE);
     g.setKey(key);
     g.setPayload(payload);
-    g.setTimestamp(System.currentTimeMillis());
+    g.setTimestamp(TimeUtils.getClock().currentTimeMillis());
     return g;
   }
 
@@ -240,7 +229,7 @@ public class DataTest {
     d.setKey(key);
     d.setPayload(payload);
     d.setExpireAt(Long.MAX_VALUE);
-    d.setTimestamp(System.currentTimeMillis());
+    d.setTimestamp(TimeUtils.getClock().currentTimeMillis());
     return d;
   }
 }

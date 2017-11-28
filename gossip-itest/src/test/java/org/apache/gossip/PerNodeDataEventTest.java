@@ -21,6 +21,7 @@ import io.teknek.tunit.TUnit;
 import org.apache.gossip.manager.GossipManager;
 import org.apache.gossip.manager.GossipManagerBuilder;
 import org.apache.gossip.model.PerNodeDataMessage;
+import org.apache.gossip.utils.TimeUtils;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -135,7 +136,7 @@ public class PerNodeDataEventTest extends AbstractIntegrationBase {
     g.setExpireAt(Long.MAX_VALUE);
     g.setKey(key);
     g.setPayload(value);
-    g.setTimestamp(System.currentTimeMillis());
+    g.setTimestamp(TimeUtils.getClock().currentTimeMillis());
     return g;
   }
   

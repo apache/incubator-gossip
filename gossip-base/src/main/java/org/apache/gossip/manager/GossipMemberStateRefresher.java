@@ -24,6 +24,7 @@ import org.apache.gossip.event.GossipListener;
 import org.apache.gossip.event.GossipState;
 import org.apache.gossip.model.PerNodeDataMessage;
 import org.apache.gossip.model.ShutdownMessage;
+import org.apache.gossip.utils.TimeUtils;
 import org.apache.log4j.Logger;
 
 import java.util.List;
@@ -38,7 +39,6 @@ public class GossipMemberStateRefresher {
   private final Map<LocalMember, GossipState> members;
   private final GossipSettings settings;
   private final List<GossipListener> listeners = new CopyOnWriteArrayList<>();
-  private final Clock clock;
   private final BiFunction<String, String, PerNodeDataMessage> findPerNodeGossipData;
   private final ExecutorService listenerExecutor;
   private final ScheduledExecutorService scheduledExecutor;
@@ -51,7 +51,6 @@ public class GossipMemberStateRefresher {
     this.settings = settings;
     listeners.add(listener);
     this.findPerNodeGossipData = findPerNodeGossipData;
-    clock = new SystemClock();
     workQueue = new ArrayBlockingQueue<>(1024);
     listenerExecutor = new ThreadPoolExecutor(1, 20, 1, TimeUnit.SECONDS, workQueue,
             new ThreadPoolExecutor.DiscardOldestPolicy());
@@ -76,7 +75,7 @@ public class GossipMemberStateRefresher {
       if (userDown)
         continue;
 
-      Double phiMeasure = entry.getKey().detect(clock.nanoTime());
+      Double phiMeasure = entry.getKey().detect(TimeUtils.getClock().nanoTime());
       GossipState requiredState;
 
       if (phiMeasure != null) {
@@ -102,7 +101,7 @@ public class GossipMemberStateRefresher {
   }
 
   public GossipState calcRequiredStateCleanupInterval(LocalMember member, GossipState state) {
-    long now = clock.nanoTime();
+    long now = TimeUtils.getClock().nanoTime();
     long nowInMillis = TimeUnit.MILLISECONDS.convert(now, TimeUnit.NANOSECONDS);
     if (nowInMillis - settings.getCleanupInterval() > member.getHeartbeat()) {
       return GossipState.DOWN;

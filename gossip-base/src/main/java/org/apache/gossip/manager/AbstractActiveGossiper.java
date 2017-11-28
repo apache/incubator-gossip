@@ -17,23 +17,20 @@
  */
 package org.apache.gossip.manager;
 
-import java.util.Map.Entry;
-import java.util.List;
-import java.util.Random;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.MetricRegistry;
 import org.apache.gossip.GossipSettings;
 import org.apache.gossip.LocalMember;
-import org.apache.gossip.model.ActiveGossipOk;
-import org.apache.gossip.model.PerNodeDataMessage;
-import org.apache.gossip.model.Member;
-import org.apache.gossip.model.Response;
-import org.apache.gossip.model.SharedDataMessage;
-import org.apache.gossip.model.ShutdownMessage;
+import org.apache.gossip.model.*;
 import org.apache.gossip.udp.*;
+import org.apache.gossip.utils.TimeUtils;
 import org.apache.log4j.Logger;
+
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.Random;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static com.codahale.metrics.MetricRegistry.name;
 
@@ -76,7 +73,7 @@ public abstract class AbstractActiveGossiper {
     }
     ShutdownMessage m = new ShutdownMessage();
     m.setNodeId(me.getId());
-    m.setShutdownAtNanos(gossipManager.getClock().nanoTime());
+    m.setShutdownAtNanos(TimeUtils.getClock().nanoTime());
     gossipCore.sendOneWay(m, target.getUri());
   }
 
@@ -84,13 +81,13 @@ public abstract class AbstractActiveGossiper {
     if (member == null) {
       return;
     }
-    long startTime = System.currentTimeMillis();
+    long startTime = TimeUtils.getClock().currentTimeMillis();
     if (gossipSettings.isBulkTransfer()) {
       sendSharedDataInBulkInternal(me, member);
     } else {
       sendSharedDataInternal(me, member);
     }
-    sharedDataHistogram.update(System.currentTimeMillis() - startTime);
+    sharedDataHistogram.update(TimeUtils.getClock().currentTimeMillis() - startTime);
   }
 
   /** Send shared data one entry at a time. */
@@ -146,13 +143,13 @@ public abstract class AbstractActiveGossiper {
     if (member == null){
       return;
     }
-    long startTime = System.currentTimeMillis();
+    long startTime = TimeUtils.getClock().currentTimeMillis();
     if (gossipSettings.isBulkTransfer()) {
       sendPerNodeDataInBulkInternal(me, member);
     } else {
       sendPerNodeDataInternal(me, member);
     }
-    sendPerNodeDataHistogram.update(System.currentTimeMillis() - startTime);
+    sendPerNodeDataHistogram.update(TimeUtils.getClock().currentTimeMillis() - startTime);
   }
 
   /** Send per node data one entry at a time. */
@@ -216,8 +213,8 @@ public abstract class AbstractActiveGossiper {
     if (member == null){
       return;
     }
-    long startTime = System.currentTimeMillis();
-    me.setHeartbeat(System.nanoTime());
+    long startTime = TimeUtils.getClock().currentTimeMillis();
+    me.setHeartbeat(TimeUtils.getClock().nanoTime());
     UdpActiveGossipMessage message = new UdpActiveGossipMessage();
     message.setUriFrom(gossipManager.getMyself().getUri().toASCIIString());
     message.setUuid(UUID.randomUUID().toString());
@@ -231,7 +228,7 @@ public abstract class AbstractActiveGossiper {
     } else {
       LOGGER.debug("Message " + message + " generated response " + r);
     }
-    sendMembershipHistogram.update(System.currentTimeMillis() - startTime);
+    sendMembershipHistogram.update(TimeUtils.getClock().currentTimeMillis() - startTime);
   }
 
   protected final Member convert(LocalMember member){

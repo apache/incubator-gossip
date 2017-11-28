@@ -21,6 +21,7 @@ import org.apache.gossip.lock.exceptions.VoteFailedException;
 import org.apache.gossip.manager.GossipManager;
 import org.apache.gossip.manager.GossipManagerBuilder;
 import org.apache.gossip.model.SharedDataMessage;
+import org.apache.gossip.utils.TimeUtils;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.platform.runner.JUnitPlatform;
@@ -118,7 +119,7 @@ public class SharedDataLockTest extends AbstractIntegrationBase {
     g.setExpireAt(Long.MAX_VALUE);
     g.setKey(key);
     g.setPayload(value);
-    g.setTimestamp(System.currentTimeMillis());
+    g.setTimestamp(TimeUtils.getClock().currentTimeMillis());
     return g;
   }
 

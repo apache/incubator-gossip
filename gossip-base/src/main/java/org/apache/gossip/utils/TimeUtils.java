@@ -15,35 +15,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.gossip;
+package org.apache.gossip.utils;
 
-import org.apache.gossip.utils.TimeUtils;
-
-import java.net.URI;
-import java.util.HashMap;
-import java.util.Map;
+import org.apache.gossip.manager.Clock;
+import org.apache.gossip.manager.SystemClock;
 
 /**
- * The object represents a gossip member with the properties as received from a remote gossip
- * member.
- * 
+ * This class provides the utilities related to time.
+ *
  */
-public class RemoteMember extends Member {
+public class TimeUtils {
 
-  /**
-   * Constructor.
-   * 
-   * @param uri
-   *          A URI object containing IP/hostname and port
-   * @param heartbeat
-   *          The current heartbeat
-   */
-  public RemoteMember(String clusterName, URI uri, String id, long heartbeat, Map<String,String> properties) {
-    super(clusterName, uri, id, heartbeat, properties);
-  }
+    private final static Clock CLOCK = new SystemClock();
 
-  public RemoteMember(String clusterName, URI uri, String id) {
-    super(clusterName, uri, id, TimeUtils.getClock().nanoTime(), new HashMap<String,String>());
-  }
-
+    public static Clock getClock() {
+        return CLOCK;
+    }
 }
