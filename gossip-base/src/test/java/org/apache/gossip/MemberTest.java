@@ -20,7 +20,7 @@ package org.apache.gossip;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;
-
+import java.util.HashSet;
 import org.junit.Assert;
 import org.junit.jupiter.api.Test;
 import org.junit.platform.runner.JUnitPlatform;
@@ -36,5 +36,16 @@ public class MemberTest {
                     .hashCode(),
             new LocalMember("mycluster", new URI("udp://4.4.4.5:1005"), "yourid", 11, new HashMap<String,String>(), 11, 6, "exponential")
                     .hashCode());
+  }
+
+  @Test
+  public void testErrorFromGossip99() throws URISyntaxException {
+          try{
+                HashSet<Member> foo = new HashSet<>();
+                foo.add(new RemoteMember("foo1",new URI("udp://4.4.4.4:1000"),"foo1"));
+                foo.add(new RemoteMember("foo1",new URI("udp://4.4.4.4:1000"),"foo1"));
+          } catch(java.lang.ClassCastException e){
+                Assert.fail();
+          }
   }
 }
