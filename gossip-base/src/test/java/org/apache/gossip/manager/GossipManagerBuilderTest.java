@@ -18,12 +18,13 @@
 package org.apache.gossip.manager;
 
 import com.codahale.metrics.MetricRegistry;
-import org.apache.gossip.Member;
 import org.apache.gossip.GossipSettings;
 import org.apache.gossip.LocalMember;
+import org.apache.gossip.Member;
 import org.apache.gossip.manager.handlers.MessageHandler;
 import org.apache.gossip.manager.handlers.ResponseHandler;
 import org.apache.gossip.manager.handlers.TypedMessageHandler;
+import org.apache.gossip.utils.TimeUtils;
 import org.junit.Assert;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -37,9 +38,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.expectThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 @RunWith(JUnitPlatform.class)
 public class GossipManagerBuilderTest {
@@ -100,7 +99,7 @@ public class GossipManagerBuilderTest {
   public void useMemberListIfProvided() throws URISyntaxException {
     LocalMember member = new LocalMember(
             "aCluster", new URI("udp://localhost:2000"), "aGossipMember",
-            System.nanoTime(), new HashMap<String, String>(), 1000, 1, "exponential");
+            TimeUtils.getClock().nanoTime(), new HashMap<String, String>(), 1000, 1, "exponential");
     List<Member> memberList = new ArrayList<>();
     memberList.add(member);
     GossipManager gossipManager = builder

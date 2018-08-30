@@ -36,6 +36,7 @@ import org.apache.gossip.model.SharedDataMessage;
 import org.apache.gossip.protocol.ProtocolManager;
 import org.apache.gossip.transport.TransportManager;
 import org.apache.gossip.utils.ReflectionUtils;
+import org.apache.gossip.utils.TimeUtils;
 import org.apache.log4j.Logger;
 
 import java.io.File;
@@ -45,11 +46,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentSkipListMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
@@ -75,7 +72,6 @@ public abstract class GossipManager {
   
   private final GossipCore gossipCore;
   private final DataReaper dataReaper;
-  private final Clock clock;
   private final ScheduledExecutorService scheduledServiced;
   private final MetricRegistry registry;
   private final RingStatePersister ringState;
@@ -92,18 +88,17 @@ public abstract class GossipManager {
     this.settings = settings;
     this.messageHandler = messageHandler;
 
-    clock = new SystemClock();
-    me = new LocalMember(cluster, uri, id, clock.nanoTime(), properties,
+    me = new LocalMember(cluster, uri, id, TimeUtils.getClock().nanoTime(), properties,
             settings.getWindowSize(), settings.getMinimumSamples(), settings.getDistribution());
     gossipCore = new GossipCore(this, registry);
     this.lockManager = new LockManager(this, settings.getLockManagerSettings(), registry);
-    dataReaper = new DataReaper(gossipCore, clock);
+    dataReaper = new DataReaper(gossipCore, TimeUtils.getClock());
     members = new ConcurrentSkipListMap<>();
     for (Member startupMember : gossipMembers) {
       if (!startupMember.equals(me)) {
         LocalMember member = new LocalMember(startupMember.getClusterName(),
                 startupMember.getUri(), startupMember.getId(),
-                clock.nanoTime(), startupMember.getProperties(), settings.getWindowSize(),
+                TimeUtils.getClock().nanoTime(), startupMember.getProperties(), settings.getWindowSize(),
                 settings.getMinimumSamples(), settings.getDistribution());
         //TODO should members start in down state?
         members.put(member, GossipState.DOWN);
@@ -202,7 +197,7 @@ public abstract class GossipManager {
       for (LocalMember l : ringState.readFromDisk()) {
         LocalMember member = new LocalMember(l.getClusterName(),
             l.getUri(), l.getId(),
-            clock.nanoTime(), l.getProperties(), settings.getWindowSize(),
+                TimeUtils.getClock().nanoTime(), l.getProperties(), settings.getWindowSize(),
             settings.getMinimumSamples(), settings.getDistribution());
         members.putIfAbsent(member, GossipState.DOWN);
       }
@@ -265,7 +260,7 @@ public abstract class GossipManager {
     if (l == null){
       return null;
     }
-    if (l.getExpireAt() < clock.currentTimeMillis()){
+    if (l.getExpireAt() < TimeUtils.getClock().currentTimeMillis()){
       return null;
     } else {
       return (Crdt) l.getPayload();
@@ -293,7 +288,7 @@ public abstract class GossipManager {
       if (l == null){
         return null;
       }
-      if (l.getExpireAt() != null && l.getExpireAt() < clock.currentTimeMillis()) {
+      if (l.getExpireAt() != null && l.getExpireAt() < TimeUtils.getClock().currentTimeMillis()) {
         return null;
       }
       return l;
@@ -305,7 +300,7 @@ public abstract class GossipManager {
     if (l == null){
       return null;
     }
-    if (l.getExpireAt() < clock.currentTimeMillis()){
+    if (l.getExpireAt() < TimeUtils.getClock().currentTimeMillis()){
       return null;
     } else {
       return l;
@@ -326,10 +321,6 @@ public abstract class GossipManager {
 
   public GossipMemberStateRefresher getMemberStateRefresher() {
     return memberStateRefresher;
-  }
-
-  public Clock getClock() {
-    return clock;
   }
 
   public MetricRegistry getRegistry() {

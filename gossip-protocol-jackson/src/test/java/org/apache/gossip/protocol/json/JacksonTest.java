@@ -29,6 +29,7 @@ import org.apache.gossip.crdt.TwoPhaseSet;
 import org.apache.gossip.manager.GossipManager;
 import org.apache.gossip.manager.GossipManagerBuilder;
 import org.apache.gossip.protocol.ProtocolManager;
+import org.apache.gossip.utils.TimeUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -119,8 +120,8 @@ public class JacksonTest {
 
   @Test
   public void testMessageEqualityAssumptions() {
-    long timeA = System.nanoTime();
-    long timeB = System.nanoTime();
+    long timeA = TimeUtils.getClock().nanoTime();
+    long timeB = TimeUtils.getClock().nanoTime();
     Assert.assertNotEquals(timeA, timeB);
 
     TestMessage messageA0 = new TestMessage(Long.toHexString(timeA));
@@ -139,7 +140,7 @@ public class JacksonTest {
   public void testMessageSerializationRoundTrip() throws Exception {
     ProtocolManager mgr = new JacksonProtocolManager(simpleSettings(new GossipSettings()), "foo", new MetricRegistry());
     for (int i = 0; i < 100; i++) {
-      TestMessage a = new TestMessage(Long.toHexString(System.nanoTime()));
+      TestMessage a = new TestMessage(Long.toHexString(TimeUtils.getClock().nanoTime()));
       byte[] bytes = mgr.write(a);
       TestMessage b = (TestMessage) mgr.read(bytes);
       Assert.assertFalse(a == b);

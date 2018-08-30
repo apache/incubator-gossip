@@ -17,12 +17,13 @@
  */
 package org.apache.gossip.examples;
 
-import java.io.IOException;
-
 import org.apache.gossip.crdt.GrowOnlyCounter;
 import org.apache.gossip.crdt.OrSet;
 import org.apache.gossip.manager.GossipManager;
 import org.apache.gossip.model.SharedDataMessage;
+import org.apache.gossip.utils.TimeUtils;
+
+import java.io.IOException;
 
 public class StandAloneNodeCrdtOrSet extends StandAloneExampleBase {
 
@@ -110,7 +111,7 @@ public class StandAloneNodeCrdtOrSet extends StandAloneExampleBase {
     m.setExpireAt(Long.MAX_VALUE);
     m.setKey(INDEX_KEY_FOR_COUNTER);
     m.setPayload(c);
-    m.setTimestamp(System.currentTimeMillis());
+    m.setTimestamp(TimeUtils.getClock().currentTimeMillis());
     gossipManager.merge(m);
   }
 
@@ -121,7 +122,7 @@ public class StandAloneNodeCrdtOrSet extends StandAloneExampleBase {
     m.setExpireAt(Long.MAX_VALUE);
     m.setKey(INDEX_KEY_FOR_SET);
     m.setPayload(new OrSet<String>(s, new OrSet.Builder<String>().remove(val)));
-    m.setTimestamp(System.currentTimeMillis());
+    m.setTimestamp(TimeUtils.getClock().currentTimeMillis());
     gossipService.merge(m);
   }
 
@@ -130,7 +131,7 @@ public class StandAloneNodeCrdtOrSet extends StandAloneExampleBase {
     m.setExpireAt(Long.MAX_VALUE);
     m.setKey(INDEX_KEY_FOR_SET);
     m.setPayload(new OrSet<String>(val));
-    m.setTimestamp(System.currentTimeMillis());
+    m.setTimestamp(TimeUtils.getClock().currentTimeMillis());
     gossipService.merge(m);
   }
 

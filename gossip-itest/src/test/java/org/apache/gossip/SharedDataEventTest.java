@@ -22,6 +22,7 @@ import org.apache.gossip.crdt.GrowOnlyCounter;
 import org.apache.gossip.manager.GossipManager;
 import org.apache.gossip.manager.GossipManagerBuilder;
 import org.apache.gossip.model.SharedDataMessage;
+import org.apache.gossip.utils.TimeUtils;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -174,7 +175,7 @@ public class SharedDataEventTest extends AbstractIntegrationBase {
     d.setKey(gCounterKey);
     d.setPayload(new GrowOnlyCounter(new GrowOnlyCounter.Builder(clients.get(0)).increment(1L)));
     d.setExpireAt(Long.MAX_VALUE);
-    d.setTimestamp(System.currentTimeMillis());
+    d.setTimestamp(TimeUtils.getClock().currentTimeMillis());
     clients.get(0).merge(d);
     
     // Check if initial Crdt received
@@ -204,7 +205,7 @@ public class SharedDataEventTest extends AbstractIntegrationBase {
     d.setKey(gCounterKey);
     d.setPayload(gcNew);
     d.setExpireAt(Long.MAX_VALUE);
-    d.setTimestamp(System.currentTimeMillis());
+    d.setTimestamp(TimeUtils.getClock().currentTimeMillis());
     clients.get(2).merge(d);
   
     // Check if Node 3's Crdt update is received in Node 2 event handler
@@ -222,7 +223,7 @@ public class SharedDataEventTest extends AbstractIntegrationBase {
     g.setExpireAt(Long.MAX_VALUE);
     g.setKey(key);
     g.setPayload(value);
-    g.setTimestamp(System.currentTimeMillis());
+    g.setTimestamp(TimeUtils.getClock().currentTimeMillis());
     return g;
   }
   

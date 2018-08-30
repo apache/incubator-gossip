@@ -17,11 +17,12 @@
  */
 package org.apache.gossip.examples;
 
-import java.io.IOException;
-
 import org.apache.gossip.crdt.PNCounter;
 import org.apache.gossip.manager.GossipManager;
 import org.apache.gossip.model.SharedDataMessage;
+import org.apache.gossip.utils.TimeUtils;
+
+import java.io.IOException;
 
 public class StandAlonePNCounter extends StandAloneExampleBase {
 
@@ -76,7 +77,7 @@ public class StandAlonePNCounter extends StandAloneExampleBase {
     m.setExpireAt(Long.MAX_VALUE);
     m.setKey("myPNCounter");
     m.setPayload(c);
-    m.setTimestamp(System.currentTimeMillis());
+    m.setTimestamp(TimeUtils.getClock().currentTimeMillis());
     gossipManager.merge(m);
   }
 
@@ -91,7 +92,7 @@ public class StandAlonePNCounter extends StandAloneExampleBase {
     m.setExpireAt(Long.MAX_VALUE);
     m.setKey("myPNCounter");
     m.setPayload(c);
-    m.setTimestamp(System.currentTimeMillis());
+    m.setTimestamp(TimeUtils.getClock().currentTimeMillis());
     gossipManager.merge(m);
   }
 

@@ -17,17 +17,18 @@
  */
 package org.apache.gossip.manager;
 
+import org.apache.gossip.GossipSettings;
+import org.apache.gossip.model.PerNodeDataMessage;
+import org.apache.gossip.model.SharedDataMessage;
+import org.apache.gossip.utils.TimeUtils;
+import org.junit.Assert;
+import org.junit.Test;
+
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.util.concurrent.ConcurrentHashMap;
-
-import org.apache.gossip.GossipSettings;
-import org.apache.gossip.model.PerNodeDataMessage;
-import org.apache.gossip.model.SharedDataMessage;
-import org.junit.Assert;
-import org.junit.Test;
 
 public class UserDataPersistenceTest {
 
@@ -85,7 +86,7 @@ public class UserDataPersistenceTest {
     d.setExpireAt(Long.MAX_VALUE);
     d.setKey("a");
     d.setPayload(a);
-    d.setTimestamp(System.currentTimeMillis());
+    d.setTimestamp(TimeUtils.getClock().currentTimeMillis());
     return d;
   }
   
@@ -96,7 +97,7 @@ public class UserDataPersistenceTest {
     d.setExpireAt(Long.MAX_VALUE);
     d.setKey("a");
     d.setPayload(a);
-    d.setTimestamp(System.currentTimeMillis());
+    d.setTimestamp(TimeUtils.getClock().currentTimeMillis());
     return d;
   }
   

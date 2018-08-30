@@ -17,14 +17,9 @@
  */
 package org.apache.gossip.crdt;
 
-import org.apache.gossip.manager.Clock;
-import org.apache.gossip.manager.SystemClock;
+import org.apache.gossip.utils.TimeUtils;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -45,7 +40,6 @@ import java.util.stream.Stream;
 */
 
 public class LwwSet<ElementType> implements CrdtAddRemoveSet<ElementType, Set<ElementType>, LwwSet<ElementType>> {
-  static private Clock clock = new SystemClock();
 
   private final Map<ElementType, Timestamps> struct;
 
@@ -77,11 +71,11 @@ public class LwwSet<ElementType> implements CrdtAddRemoveSet<ElementType, Set<El
     }
 
     Timestamps updateAdd(){
-      return new Timestamps(clock.nanoTime(), latestRemove);
+      return new Timestamps(TimeUtils.getClock().nanoTime(), latestRemove);
     }
 
     Timestamps updateRemove(){
-      return new Timestamps(latestAdd, clock.nanoTime());
+      return new Timestamps(latestAdd, TimeUtils.getClock().nanoTime());
     }
 
     Timestamps merge(Timestamps other){

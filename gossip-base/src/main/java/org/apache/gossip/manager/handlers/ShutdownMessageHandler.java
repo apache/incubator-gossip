@@ -22,6 +22,7 @@ import org.apache.gossip.manager.GossipManager;
 import org.apache.gossip.model.Base;
 import org.apache.gossip.model.PerNodeDataMessage;
 import org.apache.gossip.model.ShutdownMessage;
+import org.apache.gossip.utils.TimeUtils;
 
 public class ShutdownMessageHandler implements MessageHandler {
   
@@ -38,8 +39,8 @@ public class ShutdownMessageHandler implements MessageHandler {
     m.setKey(ShutdownMessage.PER_NODE_KEY);
     m.setNodeId(s.getNodeId());
     m.setPayload(base);
-    m.setTimestamp(System.currentTimeMillis());
-    m.setExpireAt(System.currentTimeMillis() + 30L * 1000L);
+    m.setTimestamp(TimeUtils.getClock().currentTimeMillis());
+    m.setExpireAt(TimeUtils.getClock().currentTimeMillis() + 30L * 1000L);
     gossipCore.addPerNodeData(m);
     return true;
   }
