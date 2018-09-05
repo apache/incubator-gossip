@@ -16,22 +16,30 @@ To gossip you need one or more seed nodes. Seed is just a list of places to init
 ```java
   GossipSettings settings = new GossipSettings();
   int seedNodes = 3;
-  List<GossipMember> startupMembers = new ArrayList<>();
+  List<Member> startupMembers = new ArrayList<>();
+  String cluster = UUID.randomUUID().toString();
   for (int i = 1; i < seedNodes+1; ++i) {
     URI uri = new URI("udp://" + "127.0.0.1" + ":" + (50000 + i));
-    startupMembers.add(new RemoteGossipMember(cluster, uri, i + ""));
+    startupMembers.add(new RemoteMember(cluster, uri, i + ""));
   }
 ```
 
 Here we start five gossip processes and check that they discover each other. (Normally these are on different hosts but here we give each process a distinct local ip.
 
 ```java
-  List<GossipService> clients = new ArrayList<>();
+  List<GossipManager> clients = new ArrayList<>();
   int clusterMembers = 5;
   for (int i = 1; i < clusterMembers+1; ++i) {
     URI uri = new URI("udp://" + "127.0.0.1" + ":" + (50000 + i));
-   GossipService gossipService = new GossipService(cluster, uri, i + "",
-             startupMembers, settings, (a,b) -> {});
+    GossipManager gossipManager = GossipManagerBuilder.newBuilder()
+           .cluster(cluster)
+           .uri(uri)
+           .id(i + "")
+           .gossipSettings(settings)
+           .gossipMembers(startupMembers)
+           .build();
+    gossipManager.init();
+    clients.add(gossipManager);
   }
 ```
 
@@ -40,7 +48,7 @@ Later we can check that the nodes discover each other
 ```java
   Thread.sleep(10000);
   for (int i = 0; i < clusterMembers; ++i) {
-    Assert.assertEquals(4, clients.get(i).getGossipManager().getLiveMembers().size());
+    Assert.assertEquals(4, clients.get(i).getLiveMembers().size());
   }
 ```
 
@@ -74,16 +82,16 @@ where:
 Then starting a local node is as simple as:
 
 ```java
-GossipService gossipService = new GossipService(
-  StartupSettings.fromJSONFile( "node_settings.json" )
-);
-gossipService.start();
+GossipManager gossipManager = GossipManagerBuilder.newBuilder()
+        .startupSettings(StartupSettings.fromJSONFile(new File("node_settings.json")))
+        .build();
+gossipManager.init();
 ```
 
 And then when all is done, shutdown with:
 
 ```java
-gossipService.shutdown();
+gossipManager.shutdown();
 ```
 
 Event Listener
@@ -92,24 +100,27 @@ Event Listener
 The status can be polled using the getters that return immutable lists.
 
 ```java
-   public List<LocalGossipMember> getLiveMembers()
-   public List<LocalGossipMember> getDeadMembers()
+   public List<LocalMember> getLiveMembers()
+   public List<LocalMember> getDeadMembers()
 ```
-
-These can be accessed from the `GossipManager` on your `GossipService`, e.g:
-`gossipService.getGossipManager().getLiveMembers();`
 
 Users can also attach an event listener:
 
 ```java
-    GossipService gossipService = new GossipService(cluster, uri, i + "", startupMembers,
-    settings, new GossipListener() {
-      @Override
-      public void gossipEvent(GossipMember member, GossipState state) {
-        System.out.println(System.currentTimeMillis() + " Member " + j + " reports "
-                + member + " " + state);
-      }
-  });
-  //The lambda syntax is (a,b) -> { }  //NICE!
+GossipManager gossipService = GossipManagerBuilder.newBuilder()
+        .cluster(cluster)
+        .uri(uri)
+        .id(i + "")
+        .gossipSettings(settings)
+        .gossipMembers(startupMembers)
+        .listener(new GossipListener() {
+          @Override
+          public void gossipEvent(Member member, GossipState state) {
+            System.out.println(System.currentTimeMillis() + " Member " + j + " reports "
+                  + member + " " + state);
+          }
+        })
+        .build();
+//The lambda syntax is (a,b) -> { }  //NICE!
 ```
 
